@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { FORMAT_LABELS } from "@/lib/constants";
 import { createDraftAction, generateContentAction } from "./actions";
 
-export function GenerateDialog({ pages, configured, defaultPageId }: { pages: { id: string; name: string }[]; configured: boolean; defaultPageId?: string }) {
+export function GenerateDialog({ pages, configured, defaultPageId, presetDay, compact }: { pages: { id: string; name: string }[]; configured: boolean; defaultPageId?: string; presetDay?: string; compact?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pageId, setPageId] = useState(defaultPageId ?? pages[0]?.id ?? "");
@@ -29,7 +29,7 @@ export function GenerateDialog({ pages, configured, defaultPageId }: { pages: { 
       if (res.ok) {
         toast.success("Contenido generado");
         setOpen(false);
-        router.push(`/contenidos/${res.data.id}`);
+        router.push(`/contenidos/${res.data.id}${presetDay ? `?programar=${presetDay}T10:00` : ""}`);
       } else {
         toast.error(res.error);
         router.refresh();
@@ -39,12 +39,14 @@ export function GenerateDialog({ pages, configured, defaultPageId }: { pages: { 
   function blank() {
     start(async () => {
       const res = await createDraftAction(pageId, format);
-      if (res.ok) router.push(`/contenidos/${res.data.id}`);
+      if (res.ok) router.push(`/contenidos/${res.data.id}${presetDay ? `?programar=${presetDay}T10:00` : ""}`);
       else toast.error(res.error);
     });
   }
 
-  const trigger = (
+  const trigger = compact ? (
+    <button type="button" aria-label={`Crear contenido el ${presetDay}`} title="Crear contenido para este día" className="flex size-5 items-center justify-center rounded text-muted-foreground opacity-0 transition hover:bg-accent hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100">+</button>
+  ) : (
     <Button disabled={pages.length === 0}><Sparkles /> Generar contenido</Button>
   );
 
@@ -57,7 +59,7 @@ export function GenerateDialog({ pages, configured, defaultPageId }: { pages: { 
       )}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nuevo contenido</DialogTitle>
+          <DialogTitle>Nuevo contenido{presetDay ? ` para el ${presetDay}` : ""}</DialogTitle>
           <DialogDescription>
             La IA usa la estrategia de la página y evita repetir contenidos anteriores. {!configured && "OpenAI no está configurado: solo podés crear borradores manuales."}
           </DialogDescription>

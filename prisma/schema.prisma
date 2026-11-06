@@ -144,6 +144,8 @@ model SocialPage {
   accessTokenEnc   String?          @db.Text
   tokenExpiresAt   DateTime?
   connectedAt      DateTime?
+  facebookPageName String?
+  lastCheckedAt    DateTime?
 
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
@@ -335,6 +337,9 @@ model PublicationSchedule {
   status         PostStatus @default(SCHEDULED)
   // Garantiza que un mismo contenido/horario no se publique dos veces
   idempotencyKey String     @unique
+  // No reintentar antes de esta fecha (backoff); null = sin espera
+  nextAttemptAt  DateTime?
+  lastError      String?    @db.Text
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 

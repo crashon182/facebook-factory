@@ -84,7 +84,6 @@ export function ContentEditor({ post }: { post: EditorPost }) {
             {isCancellable(post.status) && <Button variant="outline" disabled={pending} onClick={() => setConfirm("cancel")}><Ban /> Cancelar contenido</Button>}
             {isDeletable(post.status) && <Button variant="ghost" className="text-destructive hover:text-destructive" disabled={pending} onClick={() => setConfirm("delete")}><Trash2 /> Eliminar</Button>}
             {dirty && <p className="text-xs text-muted-foreground">Guardá los cambios para habilitar las demás acciones.</p>}
-            <p className="border-t pt-3 text-xs text-muted-foreground">La programación y publicación en Facebook se habilitan en la Fase 4.</p>
           </CardContent>
         </Card>
       </div>

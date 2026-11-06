@@ -16,7 +16,8 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "worker:render": "NODE_OPTIONS=--conditions=react-server tsx src/workers/render.ts"
+    "worker:render": "NODE_OPTIONS=--conditions=react-server tsx src/workers/render.ts",
+    "worker:publish": "NODE_OPTIONS=--conditions=react-server tsx src/workers/publish.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.3",

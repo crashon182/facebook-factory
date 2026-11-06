@@ -47,3 +47,13 @@ Regla: las rutas/acciones solo validan y delegan en `lib/services`; los servicio
 22. **Sin proveedor de música:** solo pistas subidas con licencia; el sistema no incluye ni descarga música.
 23. **Limpieza:** temporales >24 h se borran al iniciar el worker y cada hora; al eliminar un contenido o página se borran sus renders e imágenes.
 24. **Constantes puras separadas** (`image-templates-meta.ts`) para poder importarlas desde componentes de cliente sin arrastrar `node:fs`.
+
+## Decisiones de la Fase 4
+25. **Idempotencia sin soporte de Meta:** reclamo atómico en BD (`SCHEDULED→PUBLISHING`), intento registrado *antes* de llamar, reconciliación obligatoria de intentos sin cerrar, y reintentos directos solo ante errores definitivos (4xx). Un 5xx/timeout es ambiguo → `RECONCILING`.
+26. **Planificador sin duplicación:** el escáner de vencimientos es un *job scheduler* de BullMQ (`upsertJobScheduler` con id fijo): una sola definición aunque haya varias instancias. La garantía real sigue siendo el reclamo atómico.
+27. **Clasificación de errores de Meta** (`errors.ts`) según la documentación: 190/102 → token (página *Token vencido*, sin reintento); 4/17/32/341/613/368 → límite (espera larga); 1/2 → temporal; 506 → duplicado; 10/200–299 → permisos; 1363xxx/100 → inválido.
+28. **Tokens:** OAuth con `state` aleatorio + cookie firmada (HMAC) y vencimiento de 10 min; las Páginas obtenidas se guardan cifradas en `SystemSetting` hasta 15 min; el token elegido se guarda cifrado en `SocialPage`. `appsecret_proof` en todas las llamadas.
+29. **Zonas horarias sin dependencias** (`src/lib/time/tz.ts`, `Intl`): hora local↔UTC con DST, claves de día, rangos de calendario. El calendario se muestra en la zona de la página filtrada (o de la primera página).
+30. **Planificador automático puro** (`scheduling/plan.ts`): usa las hipótesis de horario de la estrategia dentro de la franja de la página, respeta días permitidos y máximo diario. Todo lo que la IA propone pasa por las mismas validaciones que una programación manual.
+31. **Límites propios antes de llamar a Meta:** máx. diario por página (superable solo con confirmación), 30 Reels/24 h, aprobación obligatoria según la regla de la página, medios presentes.
+32. **Bases de API sobrescribibles solo fuera de producción** (`META_GRAPH_BASE_URL`) para probar el worker contra un Graph simulado.

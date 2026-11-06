@@ -5,7 +5,7 @@ export const NAV_ITEMS = [
   { href: "/paginas", label: "Páginas", icon: Layers, phase: 1 },
   { href: "/contenidos", label: "Contenidos", icon: FileText, phase: 1 },
   { href: "/multimedia", label: "Multimedia", icon: ImageIcon, phase: 1 },
-  { href: "/calendario", label: "Calendario", icon: CalendarDays, phase: 4 },
+  { href: "/calendario", label: "Calendario", icon: CalendarDays, phase: 1 },
   { href: "/automatizacion", label: "Automatización", icon: Bot, phase: 5 },
   { href: "/analiticas", label: "Analíticas", icon: BarChart3, phase: 6 },
   { href: "/configuracion", label: "Configuración", icon: Settings, phase: 1 },

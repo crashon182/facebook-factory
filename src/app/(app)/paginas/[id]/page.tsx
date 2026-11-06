@@ -93,7 +93,7 @@ export default async function PageDetail({ params, searchParams }: { params: Pro
               <CardContent className="space-y-2 text-sm">
                 <div className="flex items-center justify-between"><span className="text-muted-foreground">Page ID</span><span className="font-mono text-xs">{page.facebookPageId ?? "—"}</span></div>
                 <div className="flex items-center justify-between"><span className="text-muted-foreground">Estado</span><ConnectionBadge status={page.connectionStatus} /></div>
-                <p className="pt-2 text-xs text-muted-foreground">La conexión OAuth con Meta llega en la Fase 4.</p>
+                <Button asChild variant="outline" size="sm" className="mt-2 w-full"><Link href={`/paginas/${page.id}/conectar`}>{page.connectionStatus === "CONNECTED" ? "Administrar conexión" : "Conectar con Facebook"}</Link></Button>
               </CardContent>
             </Card>
             <Card>

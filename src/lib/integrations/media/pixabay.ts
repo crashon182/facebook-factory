@@ -23,12 +23,19 @@ type PixabayVideo = {
 
 const authorUrl = (user: string, id: number) => `https://pixabay.com/users/${encodeURIComponent(user)}-${id}/`;
 
+/** Escala (w, h) para que el lado mayor sea `max` (largeImageURL llega hasta 1280 px). */
+function fitTo(w: number, h: number, max: number) {
+  const k = Math.min(1, max / Math.max(w, h));
+  return { width: Math.round(w * k), height: Math.round(h * k) };
+}
+
 export function mapImage(h: PixabayImage, quality: Quality = "large"): MediaCandidate {
   // webformatURL = hasta 640 px; largeImageURL = hasta 1280 px (el original y Full HD requieren acceso ampliado).
   const small = quality === "small";
+  const dims = small ? { width: h.webformatWidth ?? 640, height: h.webformatHeight ?? 480 } : fitTo(h.imageWidth ?? 1280, h.imageHeight ?? 960, 1280);
   return {
     provider: "pixabay", externalId: String(h.id), kind: "photo", title: h.tags?.split(",")[0]?.trim() || null, previewUrl: h.webformatURL,
-    downloadUrl: small ? h.webformatURL : h.largeImageURL, width: small ? (h.webformatWidth ?? 640) : (h.imageWidth ?? 1280), height: small ? (h.webformatHeight ?? 480) : (h.imageHeight ?? 960),
+    downloadUrl: small ? h.webformatURL : h.largeImageURL, ...dims,
     durationSec: null, author: h.user, authorUrl: authorUrl(h.user, h.user_id), sourceUrl: h.pageURL, license: PIXABAY_LICENSE,
   };
 }

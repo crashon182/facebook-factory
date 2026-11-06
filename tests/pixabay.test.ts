@@ -19,6 +19,7 @@ describe("mapeo Pixabay", () => {
     expect(large.authorUrl).toBe("https://pixabay.com/users/Josch13-1664300/");
     expect(large.license).toContain("pixabay.com/service/license-summary");
     expect(mapImage(img, "small").downloadUrl).toBe(img.webformatURL);
+    expect(large).toMatchObject({ width: 853, height: 1280 }); // 3000x4500 escalado a 1280 px de lado mayor (lo que realmente se descarga)
   });
   it("videos: elige tamaño y cae a otro si la URL está vacía (large no siempre existe)", () => {
     const files = { large: { url: "", width: 0, height: 0 }, medium: vf(1920, 1080), small: vf(1280, 720), tiny: vf(960, 540) };

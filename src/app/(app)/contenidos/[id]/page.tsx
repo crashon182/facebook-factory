@@ -15,11 +15,14 @@ import { isEditable } from "@/lib/services/content-status";
 import { ContentEditor } from "./editor";
 import { ImagePanel } from "./image-panel";
 import { ReelPanel } from "./reel-panel";
+import { ProgramPanel } from "./program-panel";
+import { suggestedLocalInput, toLocalInput } from "@/lib/time/tz";
 
 export const metadata: Metadata = { title: "Editar contenido" };
 
-export default async function ContentDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function ContentDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ programar?: string }> }) {
   const { id } = await params;
+  const { programar } = await searchParams;
   const post = await getContent(id);
   if (!post) notFound();
   const isReel = post.format === "REEL";
@@ -31,6 +34,9 @@ export default async function ContentDetail({ params }: { params: Promise<{ id: 
   ]);
   const libRows = library.map((a) => ({ id: a.id, type: a.type, durationMs: a.durationMs, title: a.title ?? `${a.provider} ${a.externalId ?? a.id.slice(0, 6)}` }));
   const blockedReason = !getTTSProvider() ? "Falta configurar la narración (OPENAI_API_KEY)." : !process.env.REDIS_URL ? "Falta REDIS_URL." : post.scenes.length === 0 ? "El Reel no tiene escenas." : null;
+  const schedule = await prisma.publicationSchedule.findUnique({ where: { postId: post.id }, select: { status: true } });
+  const rule = await prisma.automationRule.findUnique({ where: { pageId: post.pageId }, select: { requireApproval: true } });
+  const defaultLocal = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(programar ?? "") ? programar! : post.scheduledAt ? toLocalInput(post.scheduledAt, post.page.timezone) : suggestedLocalInput(post.page.timezone);
   const tags = Array.isArray(post.hashtags) ? (post.hashtags as string[]) : [];
 
   return (
@@ -52,6 +58,16 @@ export default async function ContentDetail({ params }: { params: Promise<{ id: 
         }}
       />
       <div className="mt-6 space-y-6">
+        {["READY", "SCHEDULED", "PUBLISHING", "PUBLISHED", "FAILED"].includes(post.status) && (
+          <ProgramPanel
+            key={`${post.updatedAt.toISOString()}-${programar ?? ""}`}
+            info={{
+              postId: post.id, pageId: post.pageId, tz: post.page.timezone, status: post.status, approved: post.approved, requireApproval: rule?.requireApproval ?? true,
+              connection: post.page.connectionStatus, scheduledAtIso: post.scheduledAt?.toISOString() ?? null, publishedAtIso: post.publishedAt?.toISOString() ?? null,
+              facebookPostId: post.facebookPostId, scheduleStatus: schedule?.status ?? null, failureReason: post.failureReason, defaultLocal,
+            }}
+          />
+        )}
         {isReel && (
           <ReelPanel
             postId={post.id}

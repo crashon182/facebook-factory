@@ -30,7 +30,7 @@ export function getIntegrationStatus(): IntegrationState[] {
     { key: "tts", name: "Narración (TTS)", description: "Voz para los Reels (por defecto OpenAI, reutiliza OPENAI_API_KEY)", phase: 3, configured: !!getTTSProvider(), missing: getTTSProvider() ? [] : ["OPENAI_API_KEY (o un TTS_PROVIDER soportado)"] },
     { key: "ffmpeg", name: "FFmpeg", description: "Renderizado de Reels e imágenes", phase: 3, configured: hasBinary(process.env.FFMPEG_PATH?.trim() || "ffmpeg"), missing: ["ffmpeg en el PATH (o FFMPEG_PATH)"] },
     { key: "pixabay", name: "Pixabay", description: "Fotografías y videos (alternativa a Pexels)", phase: 3, ...check(["PIXABAY_API_KEY"]) },
-    { key: "meta", name: "Meta Graph API", description: "Publicación y estadísticas", phase: 4, ...check(["META_APP_ID", "META_APP_SECRET", "META_GRAPH_VERSION"]) },
+    { key: "meta", name: "Meta Graph API", description: "Publicación y estadísticas", phase: 4, ...check(["META_APP_ID", "META_APP_SECRET"]) },
     { key: "redis", name: "Redis / BullMQ", description: "Colas y workers", phase: 5, ...check(["REDIS_URL"]) },
   ];
 }

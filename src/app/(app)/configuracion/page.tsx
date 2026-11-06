@@ -7,6 +7,7 @@ import { getIntegrationStatus } from "@/lib/integrations/status";
 import { getModel, isOpenAIConfigured, spentTodayUsd } from "@/lib/integrations/openai/client";
 import { getPricing } from "@/lib/integrations/openai/pricing";
 import { prisma } from "@/lib/db";
+import { getMetaConfig } from "@/lib/integrations/meta/config";
 
 export const metadata: Metadata = { title: "Configuración" };
 
@@ -16,6 +17,7 @@ export default async function SettingsPage() {
     ? await Promise.all([spentTodayUsd(), prisma.aPIUsageLog.aggregate({ where: { provider: "openai", createdAt: { gte: month } }, _sum: { costUsd: true, inputTokens: true, outputTokens: true }, _count: true })])
     : [0, null];
   const pricing = getPricing();
+  const meta = getMetaConfig();
   const integrations = getIntegrationStatus();
   const encryptionOk = (() => {
     try {
@@ -47,6 +49,19 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
         ))}
+        {meta && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base">Datos para tu app de Meta</CardTitle>
+              <CardDescription>Copialos en developers.facebook.com. Guía completa de permisos y limitaciones en <code>docs/META.md</code>.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div><span className="text-muted-foreground">URI de redirección OAuth:</span> <code className="break-all text-xs">{meta.redirectUri}</code></div>
+              <div><span className="text-muted-foreground">URL del webhook:</span> <code className="break-all text-xs">{meta.redirectUri.replace("/api/meta/oauth/callback", "/api/webhooks/meta")}</code> {meta.verifyToken ? <Badge variant="outline" className="ml-1 border-success/30 text-success">token de verificación definido</Badge> : <Badge variant="outline" className="ml-1">sin META_WEBHOOK_VERIFY_TOKEN</Badge>}</div>
+              <div><span className="text-muted-foreground">Graph API:</span> <code className="text-xs">{meta.version}</code> · <span className="text-muted-foreground">permisos:</span> <code className="text-xs">{meta.scopes.join(", ")}</code></div>
+            </CardContent>
+          </Card>
+        )}
         {usage && (
           <Card className="md:col-span-2">
             <CardHeader>

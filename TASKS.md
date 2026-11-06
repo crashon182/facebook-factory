@@ -44,10 +44,24 @@
 - [ ] Proveedores adicionales de TTS y de multimedia
 - [ ] Gestión del worker con PM2 y monitoreo de la cola (Fase 5)
 
-## Fase 4 — Meta y calendario (siguiente) · Fase 5 — Automatización · Fase 6 — Analíticas
-- [ ] OAuth Meta, publicación con idempotencia/reconciliación, calendario (mes/semana/día/lista), programación
-- [ ] Workers restantes + planificador sin duplicación, PM2, Nginx, backups MySQL, retención de temporales
-- [ ] Métricas, informes semanales, optimización con experimentos reversibles
+## Fase 4 — Meta y calendario ✅ (probado con Meta simulado)
+- [x] Cliente Graph API (OAuth, tokens de larga duración, Páginas, texto/foto/Reels, estado, reconciliación), `appsecret_proof`, errores clasificados
+- [x] Conexión de páginas, tokens cifrados, verificar/reconectar/desconectar
+- [x] Programación (validaciones, reprogramar, cancelar, publicar ahora, reintentar, programación automática) y calendario mes/semana/día/lista con filtros
+- [x] Worker de publicación con escáner BullMQ, reclamo atómico, reconciliación, reintentos con espera, recuperación de procesos caídos
+- [x] Webhook con verificación de firma; documentación `docs/META.md`
+- [x] Tests (136 en total) y E2E en navegador con worker real y Graph API simulado
+
+### Pendiente / limitaciones de Fase 4
+- [ ] **Nada se probó contra Meta real** (falta una app y una Página de prueba). Hacer una primera publicación de texto, luego foto y Reel; verificar `source` en fotos (ver docs/META.md §4)
+- [ ] Panel de la cola/planificador y monitoreo (Fase 5); hoy se ve el historial por contenido
+- [ ] Webhook: solo registra eventos; falta suscripción desde el panel de Meta
+- [ ] Reanudar subidas de Reels interrumpidas (hoy queda un borrador huérfano en Meta)
+- [ ] Vista del calendario con arrastrar y soltar
+
+## Fase 5 — Automatización (siguiente) · Fase 6 — Analíticas
+- [ ] Workers de ideas/generación/descarga/programación; planificador de automatizaciones por página con límites y presupuesto; PM2, Nginx, backups MySQL, health checks
+- [ ] Métricas (Insights), informes semanales, optimización con experimentos reversibles
 
 ## Integraciones que requerirán credenciales
 OpenAI (F2) · Pexels (F3) · TTS (F3) · Meta App con permisos y revisión de la app (F4).

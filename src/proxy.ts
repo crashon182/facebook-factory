@@ -8,5 +8,5 @@ export const proxy = auth;
 
 export const config = {
   // Protege todo salvo assets estáticos, health check y rutas internas de Auth.js
-  matcher: ["/((?!api/auth|api/health|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)"],
+  matcher: ["/((?!api/auth|api/health|api/webhooks|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)"],
 };

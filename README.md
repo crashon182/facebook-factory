@@ -1,6 +1,6 @@
 # Facebook Factory
 
-Plataforma privada (un único administrador) para gestionar varias páginas de Facebook, generar contenido con IA, programar publicaciones y analizar resultados. **Estado: Fases 1, 2 y 3 completas** (base + IA + multimedia y Reels). Ver [TASKS.md](TASKS.md) y [ARCHITECTURE.md](ARCHITECTURE.md).
+Plataforma privada (un único administrador) para gestionar varias páginas de Facebook, generar contenido con IA, programar publicaciones y analizar resultados. **Estado: Fases 1 a 4 completas** (base + IA + multimedia/Reels + Meta y calendario). Ver [TASKS.md](TASKS.md) y [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Requisitos
 - Node.js 24 (LTS activo) y npm
@@ -37,7 +37,8 @@ npm run dev                    # http://localhost:3000
 | `TTS_PROVIDER`, `TTS_MODEL`, `TTS_VOICE` | no | Narración. Por defecto `openai` (reutiliza `OPENAI_API_KEY`, modelo `gpt-4o-mini-tts`) |
 | `MEDIA_PROVIDER`, `MEDIA_EXTRA_ALLOWED_HOSTS` | no | Proveedor activo y hosts extra permitidos para descargas |
 | `STORAGE_DIR`, `FFMPEG_PATH`, `FONT_DIR`, `RENDER_CONCURRENCY` | no | Ver `.env.example` |
-| `META_APP_ID`, `META_APP_SECRET`, `META_GRAPH_VERSION` | Fase 4 | OAuth y publicación |
+| `META_APP_ID`, `META_APP_SECRET` | Fase 4 | OAuth y publicación (ver `docs/META.md`) |
+| `META_GRAPH_VERSION`, `META_SCOPES`, `META_WEBHOOK_VERIFY_TOKEN` | no | Versión (por defecto `v27.0`), permisos y verificación del webhook |
 
 Sin las claves de integración, el sistema funciona y muestra esas integraciones como **«No configuradas»** en *Configuración*. Nada se simula.
 
@@ -46,6 +47,7 @@ Sin las claves de integración, el sistema funciona y muestra esas integraciones
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run worker:render` | **Worker de renderizado de Reels** (proceso aparte; necesita Redis) |
+| `npm run worker:publish` | **Worker de publicación en Facebook** + escáner de vencimientos (proceso aparte; necesita Redis) |
 | `npm run typecheck` · `lint` · `test` | Verificaciones |
 | `npm run verify` | typecheck + lint + tests + build |
 | `npm run db:migrate` / `db:deploy` / `db:seed` / `db:studio` | Prisma |
@@ -80,3 +82,12 @@ Los tests de integración usan la base de datos real de `DATABASE_URL` (solo cre
 - Los subtítulos se sincronizan **por proporción** dentro de la ventana de audio de cada escena (el TTS no entrega marcas por palabra).
 - Producción: instalar `ffmpeg` y `fonts-dejavu-core`, y mantener `npm run worker:render` corriendo (PM2 en la Fase 5).
 - **Pixabay:** API oficial (`/api/` y `/api/videos/`), consultas cacheadas 24 h (lo exigen sus términos), 100 pedidos/60 s con manejo de 429, atribución visible junto a los resultados, descarga a nuestro almacenamiento (no se enlazan sus URLs de forma permanente). Fotos hasta 1280 px (el original y Full HD requieren acceso ampliado de Pixabay). Los videos no tienen filtro de orientación en su API: se filtra del lado del servidor.
+
+## Meta y calendario (Fase 4)
+Guía completa de configuración, permisos, limitaciones y garantías en **[docs/META.md](docs/META.md)**.
+- **Conexión:** botón *Conectar con Facebook* en cada página (OAuth con `state` firmado, token de larga duración, selección de la Página, token **cifrado**). Verificar / reconectar / desconectar.
+- **Programación:** desde el editor, el calendario (mes, semana, día y lista, con filtros por página, tipo y estado) o *Programar automáticamente* según la estrategia y las reglas de la página. Reprogramar, cancelar, publicar ahora, reintentar y ver el historial de intentos.
+- **Publicación:** texto, imágenes y Reels. Idempotencia por reclamo atómico + intento registrado + reconciliación con Meta (nunca se reintenta a ciegas).
+- **Zonas horarias:** todo se guarda en UTC; se muestra y se ingresa en la zona de cada página.
+- **Webhook** `/api/webhooks/meta` con verificación de firma `X-Hub-Signature-256`.
+- **Producción:** mantener corriendo `worker:render` y `worker:publish`. Sin `worker:publish` lo programado queda esperando.
