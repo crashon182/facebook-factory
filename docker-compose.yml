@@ -1,0 +1,33 @@
+# Infraestructura local de desarrollo (MySQL 8 + Redis).
+# En producción se usan MySQL/Redis instalados en el servidor (ver docs/DEPLOY.md).
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: ff-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-ff_root_dev}
+      MYSQL_DATABASE: facebook_factory
+      MYSQL_USER: ff_user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ff_dev_password}
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    ports:
+      - "127.0.0.1:3317:3306"
+    volumes:
+      - ff_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-ff_root_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    container_name: ff-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6381:6379"
+    volumes:
+      - ff_redis_data:/data
+volumes:
+  ff_mysql_data:
+  ff_redis_data:
