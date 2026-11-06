@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Sparkles, Globe } from "lucide-react";
+import { Pencil, Globe } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { ActiveBadge, AutomationBadge, ConnectionBadge } from "@/components/shared/status-badges";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getPage } from "@/lib/services/pages";
+import { getActiveStrategy, listStrategyVersions } from "@/lib/services/strategies";
+import { isOpenAIConfigured } from "@/lib/integrations/openai/client";
 import { getAutomationsPaused } from "@/lib/services/settings";
 import { LANGUAGES } from "@/lib/constants";
 import { AutomationPanel } from "./automation-panel";
+import { GenerateStrategyButton, StrategyPanel } from "./strategy-panel";
 
 export const metadata: Metadata = { title: "Detalle de página" };
 
@@ -24,9 +26,11 @@ function Row({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-export default async function PageDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function PageDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { id } = await params;
-  const [page, paused] = await Promise.all([getPage(id), getAutomationsPaused()]);
+  const { tab } = await searchParams;
+  const [page, paused, active, versions] = await Promise.all([getPage(id), getAutomationsPaused(), getActiveStrategy(id), listStrategyVersions(id)]);
+  const configured = isOpenAIConfigured();
   if (!page) notFound();
   const a = page.automation;
   const lang = LANGUAGES.find((l) => l.value === page.language)?.label ?? page.language;
@@ -38,12 +42,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
         description={page.topic}
         actions={
           <>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span><Button variant="outline" disabled><Sparkles /> GENERAR ESTRATEGIA CON IA</Button></span>
-              </TooltipTrigger>
-              <TooltipContent>Disponible en la Fase 2 (requiere OPENAI_API_KEY).</TooltipContent>
-            </Tooltip>
+            <GenerateStrategyButton pageId={page.id} configured={configured} hasStrategy={!!active} />
             <Button asChild><Link href={`/paginas/${page.id}/editar`}><Pencil /> Editar</Link></Button>
           </>
         }
@@ -54,7 +53,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
         <AutomationBadge enabled={!!a?.enabled} paused={paused} />
       </div>
 
-      <Tabs defaultValue="resumen">
+      <Tabs defaultValue={["estrategia", "automatizacion"].includes(tab ?? "") ? tab : "resumen"}>
         <TabsList>
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="estrategia">Estrategia</TabsTrigger>
@@ -107,21 +106,13 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
         </TabsContent>
 
         <TabsContent value="estrategia" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Estrategia editorial</CardTitle>
-              <CardDescription>Versionada en la base de datos; podrás regenerarla y editarla manualmente.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {page.strategies[0] ? (
-                <p className="text-sm">Versión {page.strategies[0].version} ({page.strategies[0].status}).</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Esta página aún no tiene estrategia. La generación con IA se implementa en la Fase 2 y requiere configurar OPENAI_API_KEY.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <StrategyPanel
+            pageId={page.id}
+            configured={configured}
+            strategy={active?.strategy ?? null}
+            activeVersion={active?.version ?? null}
+            versions={versions.map((v) => ({ ...v, createdAt: v.createdAt.toISOString() }))}
+          />
         </TabsContent>
 
         <TabsContent value="automatizacion" className="mt-4">

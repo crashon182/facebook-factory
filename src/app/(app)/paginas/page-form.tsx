@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { LANGUAGES, TIMEZONES } from "@/lib/constants";
 import { pageFormSchema, type PageFormInput, type PageFormValues } from "@/lib/validation/page";
 import { savePageAction } from "./actions";
+import { generateStrategyAction } from "./strategy-actions";
 
 function Field({ label, error, hint, children, htmlFor }: { label: string; error?: string; hint?: string; children: React.ReactNode; htmlFor?: string }) {
   return (
@@ -44,19 +45,29 @@ export function PageForm({ pageId, defaults, openaiConfigured }: { pageId?: stri
   const { register, control, handleSubmit, formState: { errors }, setError } = form;
   const err = (k: keyof PageFormInput) => errors[k]?.message as string | undefined;
 
-  const onSubmit = handleSubmit((values) => {
-    start(async () => {
-      const res = await savePageAction(pageId ?? null, values as PageFormInput);
-      if (!res.ok) {
-        if (res.fieldErrors) Object.entries(res.fieldErrors).forEach(([k, m]) => setError(k as keyof PageFormInput, { message: m[0] }));
-        toast.error(res.error);
-        return;
-      }
-      toast.success(pageId ? "Página actualizada" : "Página creada");
-      router.push(`/paginas/${res.data.id}`);
-      router.refresh();
+  function submitWith(generate: boolean) {
+    return handleSubmit((values) => {
+      start(async () => {
+        const res = await savePageAction(pageId ?? null, values as PageFormInput);
+        if (!res.ok) {
+          if (res.fieldErrors) Object.entries(res.fieldErrors).forEach(([k, m]) => setError(k as keyof PageFormInput, { message: m[0] }));
+          toast.error(res.error);
+          return;
+        }
+        toast.success(pageId ? "Página actualizada" : "Página creada");
+        if (generate) {
+          const t = toast.loading("Generando estrategia con IA… puede tardar hasta un minuto");
+          const g = await generateStrategyAction(res.data.id);
+          toast.dismiss(t);
+          if (g.ok) toast.success(`Estrategia v${g.data.version} generada`);
+          else toast.error(g.error);
+          router.push(`/paginas/${res.data.id}?tab=estrategia`);
+        } else router.push(`/paginas/${res.data.id}`);
+        router.refresh();
+      });
     });
-  });
+  }
+  const onSubmit = submitWith(false);
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -172,13 +183,13 @@ export function PageForm({ pageId, defaults, openaiConfigured }: { pageId?: stri
         <Tooltip>
           <TooltipTrigger asChild>
             <span>
-              <Button type="button" variant="outline" disabled>
-                <Sparkles /> GENERAR ESTRATEGIA CON IA
+              <Button type="button" variant="outline" disabled={!openaiConfigured || pending} onClick={submitWith(true)}>
+                {pending ? <Loader2 className="animate-spin" /> : <Sparkles />} GENERAR ESTRATEGIA CON IA
               </Button>
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            {openaiConfigured ? "Disponible en la Fase 2 (integración con OpenAI)." : "Disponible en la Fase 2 y requiere OPENAI_API_KEY."}
+            {openaiConfigured ? "Guarda la página y genera su estrategia editorial con IA." : "Requiere OPENAI_API_KEY en el entorno."}
           </TooltipContent>
         </Tooltip>
         <Button type="button" variant="ghost" onClick={() => router.back()}>Cancelar</Button>

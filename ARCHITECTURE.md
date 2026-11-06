@@ -29,3 +29,11 @@ prisma/                     schema, migraciones, seed
 tests/                      Vitest (unitarios + integración con MySQL)
 ```
 Regla: las rutas/acciones solo validan y delegan en `lib/services`; los servicios acceden a datos vía Prisma.
+
+## Decisiones de la Fase 2
+11. **Responses API + `zodTextFormat`** (SDK `openai` 7.53). Los esquemas enviados a la IA son *strict-compatibles* (todos los campos obligatorios, sin refinamientos); las reglas de negocio extra se validan después (`checkStrategy`) y nada se guarda si fallan.
+12. **Sin precios inventados:** los precios por modelo se configuran por entorno; sin ellos el costo es 0 y la pantalla Configuración lo indica.
+13. **Versionado inmutable de estrategias:** editar o restaurar crea una versión nueva; solo una está ACTIVE.
+14. **Máquina de estados de contenido** en `content-status.ts` (pura y testeada). Solo se edita/regenera/borra en DRAFT, READY, FAILED o CANCELLED. Programar y publicar quedan para la Fase 4.
+15. **Anti-repetición:** hash normalizado del texto + hasta 2 intentos; si la IA repite dos veces el contenido queda FAILED con el motivo.
+16. **Errores de IA** se traducen a mensajes claros (401 clave, 404 modelo, 429 cuota) y quedan en `ContentPost.failureReason`.

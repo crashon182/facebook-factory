@@ -5,9 +5,9 @@ import "dotenv/config";
 export default defineConfig({
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      "@": path.resolve(import.meta.dirname, "src"),
       // `server-only` lanza fuera de Next; en tests lo neutralizamos.
-      "server-only": path.resolve(__dirname, "tests/stubs/server-only.ts"),
+      "server-only": path.resolve(import.meta.dirname, "tests/stubs/server-only.ts"),
     },
   },
   test: {
