@@ -15,7 +15,7 @@ function fail(e: unknown): { ok: false; error: string } {
 
 export async function generateStrategyAction(pageId: string): Promise<ActionResult<{ version: number }>> {
   const user = await requireAdmin();
-  if (!rateLimit(`ai:strategy:${user.id}`, 6, 60_000).ok) return { ok: false, error: "Demasiadas generaciones seguidas. Esperá un minuto." };
+  if (!(await rateLimit(`ai:strategy:${user.id}`, 6, 60_000)).ok) return { ok: false, error: "Demasiadas generaciones seguidas. Esperá un minuto." };
   try {
     const row = await generateStrategy(pageId);
     revalidatePath(`/paginas/${pageId}`);

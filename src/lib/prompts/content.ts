@@ -53,3 +53,31 @@ export function buildContentPrompt(opts: {
 
   return { system, user };
 }
+
+export function buildIdeasPrompt(opts: {
+  page: SocialPage;
+  strategy: Strategy | null;
+  count: number;
+  formats: string[];
+  recentTitles: string[];
+  rule: AutomationRule | null;
+}) {
+  const { page, strategy, count, formats, recentTitles, rule } = opts;
+  const system = [
+    "Sos un estratega editorial de redes sociales. Proponés ideas de publicaciones concretas, variadas y originales para una página de Facebook.",
+    `Escribí en ${LANG[page.language] ?? page.language}.`,
+    `Devolvé exactamente ${count} ideas. Cada una con título corto, resumen de 1–2 frases, formato y categoría.`,
+    `Formatos permitidos (usá solo estos): ${formats.join(", ")}.`,
+    "Reglas: no inventes datos, citas ni estadísticas; sin engagement bait ni clickbait; variá ángulos y categorías; no repitas ideas ya usadas.",
+    "`category` debe ser uno de los nombres de categoría de la estrategia (si hay).",
+  ].join("\n");
+  const user = [
+    `Página: ${page.name} — ${page.topic}`,
+    `Descripción: ${page.description}`,
+    strategy ? `Categorías: ${strategy.categories.map((c) => c.name).join("; ")}` : "",
+    strategy ? `Tono: ${strategy.tone}` : "",
+    rule?.editorialRestrictions ? `Restricciones editoriales (obligatorias): ${rule.editorialRestrictions}` : "",
+    recentTitles.length ? `Ideas y contenidos ya usados (no repetir):\n${recentTitles.map((t) => `- ${t}`).join("\n")}` : "",
+  ].filter(Boolean).join("\n");
+  return { system, user };
+}

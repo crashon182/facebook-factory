@@ -32,7 +32,7 @@ function fail(e: unknown): { ok: false; error: string } {
 
 export async function searchMediaAction(input: unknown): Promise<ActionResult<MediaSearchResult>> {
   const user = await requireAdmin();
-  if (!rateLimit(`media:search:${user.id}`, 40, 60_000).ok) return { ok: false, error: "Demasiadas búsquedas seguidas. Esperá un momento." };
+  if (!(await rateLimit(`media:search:${user.id}`, 40, 60_000)).ok) return { ok: false, error: "Demasiadas búsquedas seguidas. Esperá un momento." };
   try {
     const p = searchSchema.parse(input);
     const provider = getProvider(p.provider);

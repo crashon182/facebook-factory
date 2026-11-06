@@ -59,9 +59,25 @@
 - [ ] Reanudar subidas de Reels interrumpidas (hoy queda un borrador huérfano en Meta)
 - [ ] Vista del calendario con arrastrar y soltar
 
-## Fase 5 — Automatización (siguiente) · Fase 6 — Analíticas
-- [ ] Workers de ideas/generación/descarga/programación; planificador de automatizaciones por página con límites y presupuesto; PM2, Nginx, backups MySQL, health checks
-- [ ] Métricas (Insights), informes semanales, optimización con experimentos reversibles
+## Fase 5 — Automatización e infraestructura ✅
+- [x] Motor de automatización por página (stock, frecuencia, formatos, días, presupuesto, aprobación, publicación automática) con bloqueo entre instancias
+- [x] Workers independientes: generación, render, publicación y planificador (tareas periódicas idempotentes); latidos
+- [x] Generación de ideas, preparación de medios (imagen con frase, foto, render del Reel), mantenimiento y retención
+- [x] Pantalla de monitoreo (procesos, colas, fallidos con reintento, estado por página) y `/api/health` (`?strict=1`)
+- [x] Rate limit en Redis; pausa global y por página respetadas por el motor y los workers
+- [x] PM2 (`ecosystem.config.cjs`), Nginx (validado con `nginx -t`), `deploy.sh`, respaldo/restauración (probados), `monitor.sh`, `docs/DEPLOY.md`
+- [x] Tests (161 en total) y E2E real: OpenAI + 5 procesos PM2 + navegador; caída de un worker (kill -9) recuperada por PM2
+
+### Pendiente / limitaciones de Fase 5
+- [ ] **El despliegue en un servidor real no se probó** (Nginx/certbot/UFW/systemd se validaron solo por sintaxis y en local). Seguir `docs/DEPLOY.md` en un servidor de prueba.
+- [ ] La optimización automática de horarios (`autoOptimizeTimes`) se implementa con las analíticas (Fase 6)
+- [ ] «Recopilar estadísticas» y «Analizar resultados» (colas) → Fase 6
+- [ ] La generación manual con IA sigue ejecutándose dentro de la petición web (la automática ya corre en worker)
+- [ ] Alertas: `monitor.sh` + webhook; falta integración con un sistema de métricas (Prometheus/Grafana) si se necesita
+
+## Fase 6 — Analíticas y optimización (siguiente)
+- [ ] Recopilar métricas de Meta (Insights) con snapshots históricos; dashboards por página y consolidados
+- [ ] Informes semanales con IA, indicadores normalizados, experimentos reversibles, ajustes graduales del calendario (sin superar límites sin autorización)
 
 ## Integraciones que requerirán credenciales
 OpenAI (F2) · Pexels (F3) · TTS (F3) · Meta App con permisos y revisión de la app (F4).

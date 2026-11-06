@@ -21,7 +21,7 @@ const renderSchema = z.object({ durationSec: z.number().int().min(5).max(90), mu
 
 export async function requestRenderAction(postId: string, input: unknown): Promise<ActionResult<{ jobId: string }>> {
   const user = await requireAdmin();
-  if (!rateLimit(`render:${user.id}`, 10, 60_000).ok) return { ok: false, error: "Demasiados renders seguidos." };
+  if (!(await rateLimit(`render:${user.id}`, 10, 60_000)).ok) return { ok: false, error: "Demasiados renders seguidos." };
   try {
     const o = renderSchema.parse(input);
     const jobId = await requestRender(z.string().min(1).parse(postId), { durationSec: o.durationSec, musicAssetId: o.musicAssetId || undefined });
@@ -87,6 +87,25 @@ export async function generateImageAction(postId: string, input: unknown): Promi
     revalidatePath(`/contenidos/${postId}`);
     revalidatePath("/multimedia");
     return { ok: true, data: { id: asset.id } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Foto principal de un contenido de formato Imagen (la que se publicará si no hay una imagen generada). */
+export async function setPostPhotoAction(postId: string, assetId: string | null): Promise<ActionResult<null>> {
+  await requireAdmin();
+  try {
+    const post = await prisma.contentPost.findUnique({ where: { id: postId }, select: { status: true, format: true } });
+    if (!post) return { ok: false, error: "El contenido no existe." };
+    if (!["DRAFT", "READY", "FAILED"].includes(post.status)) return { ok: false, error: "Este contenido no admite cambios en su estado actual." };
+    if (assetId) {
+      const a = await prisma.mediaAsset.findUnique({ where: { id: assetId } });
+      if (!a || a.type !== "PHOTO") return { ok: false, error: "Elegí una foto de la biblioteca." };
+    }
+    await prisma.contentPost.update({ where: { id: postId }, data: { mediaAssetId: assetId, approved: false } });
+    revalidatePath(`/contenidos/${postId}`);
+    return { ok: true, data: null };
   } catch (e) {
     return fail(e);
   }

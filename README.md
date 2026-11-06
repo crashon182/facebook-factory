@@ -1,6 +1,6 @@
 # Facebook Factory
 
-Plataforma privada (un único administrador) para gestionar varias páginas de Facebook, generar contenido con IA, programar publicaciones y analizar resultados. **Estado: Fases 1 a 4 completas** (base + IA + multimedia/Reels + Meta y calendario). Ver [TASKS.md](TASKS.md) y [ARCHITECTURE.md](ARCHITECTURE.md).
+Plataforma privada (un único administrador) para gestionar varias páginas de Facebook, generar contenido con IA, programar publicaciones y analizar resultados. **Estado: Fases 1 a 5 completas** (base + IA + multimedia/Reels + Meta/calendario + automatización e infraestructura). Ver [TASKS.md](TASKS.md) y [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Requisitos
 - Node.js 24 (LTS activo) y npm
@@ -47,7 +47,9 @@ Sin las claves de integración, el sistema funciona y muestra esas integraciones
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run worker:render` | **Worker de renderizado de Reels** (proceso aparte; necesita Redis) |
+| `npm run worker:generate` | **Worker de automatización/generación** (proceso aparte; necesita Redis) |
 | `npm run worker:publish` | **Worker de publicación en Facebook** + escáner de vencimientos (proceso aparte; necesita Redis) |
+| `npm run scheduler` | **Planificador** (registra las tareas periódicas; una sola instancia) |
 | `npm run typecheck` · `lint` · `test` | Verificaciones |
 | `npm run verify` | typecheck + lint + tests + build |
 | `npm run db:migrate` / `db:deploy` / `db:seed` / `db:studio` | Prisma |
@@ -55,7 +57,7 @@ Sin las claves de integración, el sistema funciona y muestra esas integraciones
 Los tests de integración usan la base de datos real de `DATABASE_URL` (solo crean/borran registros con prefijo `TEST_ff_`).
 
 ## Producción
-`output: "standalone"` está activo (`node .next/standalone/server.js`). Los archivos de PM2, Nginx, backups y scripts de despliegue se entregan junto a los workers (Fase 5); ver TASKS.md. Health check: `GET /api/health`.
+Guía completa en **[docs/DEPLOY.md](docs/DEPLOY.md)**: PM2 (`ecosystem.config.cjs`, 5 procesos), Nginx + HTTPS (`deploy/nginx`), `scripts/deploy.sh`, respaldos (`scripts/backup-mysql.sh` / `restore-mysql.sh`), monitoreo (`scripts/monitor.sh`) y retención de datos. Health check: `GET /api/health` (`?strict=1` también exige los workers).
 
 ## Seguridad (Fase 1)
 - Auth.js (credenciales, JWT de 12 h) + `proxy.ts` que protege todas las rutas, y `requireAdmin()` en cada acción de servidor.
@@ -91,3 +93,10 @@ Guía completa de configuración, permisos, limitaciones y garantías en **[docs
 - **Zonas horarias:** todo se guarda en UTC; se muestra y se ingresa en la zona de cada página.
 - **Webhook** `/api/webhooks/meta` con verificación de firma `X-Hub-Signature-256`.
 - **Producción:** mantener corriendo `worker:render` y `worker:publish`. Sin `worker:publish` lo programado queda esperando.
+
+## Automatización (Fase 5)
+- **Desarrollo:** además de `npm run dev`, abrí `npm run worker:generate`, `worker:render`, `worker:publish` y `scheduler` (o usá PM2 con `pm2 start ecosystem.config.cjs`).
+- **Cada página** tiene sus reglas (pestaña *Automatización*): activar/desactivar, máximo diario, tipos de contenido, días y franja horaria, frecuencia de generación, días de anticipación, presupuesto diario de IA, aprobación manual y publicación automática. Hay un botón de pausa por página y uno global.
+- **El motor** (`src/lib/automation/engine.ts`), cada `AUTOMATION_TICK_MS` (5 min): si la regla está activa y no hay pausa, calcula cuánto contenido falta (días de anticipación × máximo diario − lo ya preparado), genera ideas y contenidos con IA (máx. 3 por corrida), prepara los medios (imagen con frase, foto, render del Reel) y, solo si activaste la publicación automática, los programa respetando todos los límites.
+- **Seguridad:** con *aprobación manual obligatoria* nada se aprueba ni se programa solo; nunca supera el presupuesto diario ni el máximo por día; si la IA falla dos veces seguidas la corrida se corta; el bloqueo por página evita corridas simultáneas.
+- **Monitoreo:** pantalla *Automatización* (procesos con latido, colas, trabajos fallidos con reintento, estado y gasto por página, «Ejecutar ahora»).

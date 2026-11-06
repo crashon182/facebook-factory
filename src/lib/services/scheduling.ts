@@ -21,7 +21,10 @@ const exists = (p: string) => access(p).then(() => true, () => false);
 export async function resolvePublishMedia(postId: string, format: string): Promise<{ kind: "photo" | "reel"; file: string } | null> {
   const kind = publishKindFor(format);
   if (kind === "photo") {
-    const a = await prisma.mediaAsset.findFirst({ where: { postId, type: { in: ["RENDERED_IMAGE", "PHOTO"] } }, orderBy: { createdAt: "desc" } });
+    // Prioridad: imagen generada por el sistema para este contenido; si no, la foto principal elegida/descargada.
+    const own = await prisma.mediaAsset.findFirst({ where: { postId, type: { in: ["RENDERED_IMAGE", "PHOTO"] } }, orderBy: { createdAt: "desc" } });
+    const primary = own ? null : (await prisma.contentPost.findUnique({ where: { id: postId }, select: { mediaAsset: true } }))?.mediaAsset;
+    const a = own ?? (primary && primary.type === "PHOTO" ? primary : null);
     return a?.localPath ? { kind: "photo", file: resolveInStorage(a.localPath) } : null;
   }
   if (kind === "reel") {

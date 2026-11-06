@@ -13,7 +13,7 @@ const MAX_REQUEST = 320 * 1024 * 1024;
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  if (!rateLimit(`upload:${session.user.id}`, 20, 60_000).ok) return NextResponse.json({ error: "Demasiadas subidas seguidas." }, { status: 429 });
+  if (!(await rateLimit(`upload:${session.user.id}`, 20, 60_000)).ok) return NextResponse.json({ error: "Demasiadas subidas seguidas." }, { status: 429 });
   if (Number(req.headers.get("content-length") ?? 0) > MAX_REQUEST) return NextResponse.json({ error: "Archivo demasiado grande." }, { status: 413 });
 
   const form = await req.formData().catch(() => null);

@@ -55,7 +55,7 @@ export async function unscheduleAction(postId: string): Promise<ActionResult<nul
 /** Publica ahora: programa para este instante y encola. El reclamo atómico evita duplicados aunque se pulse dos veces. */
 export async function publishNowAction(postId: string): Promise<ActionResult<null>> {
   const user = await requireAdmin();
-  if (!rateLimit(`publish-now:${user.id}`, 10, 60_000).ok) return { ok: false, error: "Demasiadas publicaciones seguidas." };
+  if (!(await rateLimit(`publish-now:${user.id}`, 10, 60_000)).ok) return { ok: false, error: "Demasiadas publicaciones seguidas." };
   try {
     const current = await prisma.publicationSchedule.findUnique({ where: { postId }, select: { id: true, status: true } });
     let id = current?.id;

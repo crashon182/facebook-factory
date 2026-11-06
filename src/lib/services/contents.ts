@@ -70,6 +70,7 @@ async function runGeneration(postId: string, req: { pageId: string; format: Cont
         topic: data.topic.slice(0, 300),
         body: data.body,
         imageText: data.imageText?.trim() || null,
+        imageKeywords: data.imageKeywords.map((k) => k.trim()).filter(Boolean).slice(0, 8),
         facebookCaption: data.facebookCaption,
         script: data.script,
         hashtags: data.hashtags.map((h) => h.replace(/^#+/, "").trim()).filter(Boolean),

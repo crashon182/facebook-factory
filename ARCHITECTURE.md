@@ -57,3 +57,14 @@ Regla: las rutas/acciones solo validan y delegan en `lib/services`; los servicio
 30. **Planificador automático puro** (`scheduling/plan.ts`): usa las hipótesis de horario de la estrategia dentro de la franja de la página, respeta días permitidos y máximo diario. Todo lo que la IA propone pasa por las mismas validaciones que una programación manual.
 31. **Límites propios antes de llamar a Meta:** máx. diario por página (superable solo con confirmación), 30 Reels/24 h, aprobación obligatoria según la regla de la página, medios presentes.
 32. **Bases de API sobrescribibles solo fuera de producción** (`META_GRAPH_BASE_URL`) para probar el worker contra un Graph simulado.
+
+## Decisiones de la Fase 5
+33. **Cinco procesos independientes** (web, generación, render, publicación, planificador) bajo PM2; la web solo encola. Se eliminó `output: standalone` porque los workers necesitan el repositorio completo (`next start`).
+34. **Planificador sin duplicación:** `upsertJobScheduler` con id fijo (idempotente); el proceso `scheduler` se auto-repara cada 60 s (si Redis se vacía, vuelve a registrar). Las corridas por página usan `jobId` por franja de 5 min y un **bloqueo por página** (`AutomationRule.lockedUntil`, `UPDATE` condicional) válido entre instancias.
+35. **Motor con dependencias inyectables** (`EngineDeps`) → se prueba sin OpenAI. Orden: condiciones de parada → bloqueo → frecuencia → stock objetivo → presupuesto por llamada → generación → (aprobación) → medios → programación.
+36. **Aprobación y publicación son decisiones del administrador**: `requireApproval` impide aprobar solo; `autoPublish` es la única vía por la que el motor programa. Todo pasa por las mismas validaciones que una programación manual.
+37. **Variedad de formatos** (`pickFormat`): pondera la mezcla recomendada por la estrategia y penaliza lo usado recientemente; por defecto solo formatos sin dependencias externas (Reel/Imagen se habilitan explícitamente).
+38. **Preparación de medios asíncrona** (`postprocess`): imagen con frase (FFmpeg), foto del proveedor activo o render del Reel. La programación espera a que el medio exista (si no, se reintenta en la siguiente corrida).
+39. **Latidos en Redis** (clave con TTL 30 s) para saber qué proceso está vivo; `/api/health?strict=1` los exige. `getReadyRedis` espera la conexión inicial para no informar falsos «caídos».
+40. **Rate limit en Redis** (ventana fija compartida entre procesos) con respaldo en memoria.
+41. **Retención diaria** (`runMaintenance`) y respaldos con `mysqldump --single-transaction`, credenciales en archivo temporal 600 (no en la línea de comandos) y verificación del gzip.

@@ -11,11 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ASPECTS, IMAGE_TEMPLATES } from "@/lib/video/image-templates-meta";
-import { generateImageAction } from "../media-actions";
+import { generateImageAction, setPostPhotoAction } from "../media-actions";
 
 export type PostImage = { id: string; path: string; title: string | null };
 
-export function ImagePanel({ postId, defaultText, photos, images, editable }: { postId: string; defaultText: string; photos: { id: string; title: string }[]; images: PostImage[]; editable: boolean }) {
+export function ImagePanel({ postId, defaultText, photos, images, editable, format, primaryPhotoId }: { postId: string; defaultText: string; photos: { id: string; title: string }[]; images: PostImage[]; editable: boolean; format?: string; primaryPhotoId?: string | null }) {
   const router = useRouter();
   const [text, setText] = useState(defaultText);
   const [attribution, setAttribution] = useState("");
@@ -38,6 +38,16 @@ export function ImagePanel({ postId, defaultText, photos, images, editable }: { 
         <CardDescription>Plantillas con los colores y el nombre de la página. Se genera localmente con FFmpeg.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {format === "IMAGE" && (
+          <div className="space-y-1.5 rounded-lg border p-3">
+            <Label>Foto principal (se publica con el texto)</Label>
+            <Select value={primaryPhotoId ?? "none"} onValueChange={async (v) => { const r = await setPostPhotoAction(postId, v === "none" ? null : v); if (r.ok) { toast.success("Foto actualizada"); router.refresh(); } else toast.error(r.error); }} disabled={!editable}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="none">Sin foto</SelectItem>{photos.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">También podés generar una imagen con frase más abajo: si existe, tiene prioridad.</p>
+          </div>
+        )}
         <div className="space-y-1.5"><Label htmlFor="it">Frase</Label><Textarea id="it" rows={3} value={text} maxLength={600} onChange={(e) => setText(e.target.value)} disabled={!editable} /></div>
         <div className="space-y-1.5"><Label htmlFor="ia">Autor / cita (opcional)</Label><Input id="ia" value={attribution} maxLength={120} onChange={(e) => setAttribution(e.target.value)} placeholder="Proverbios 3:5" disabled={!editable} /></div>
         <div className="grid gap-3 sm:grid-cols-2">

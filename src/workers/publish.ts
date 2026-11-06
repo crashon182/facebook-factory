@@ -3,11 +3,14 @@ import "dotenv/config";
 import { Worker } from "bullmq";
 import { prisma } from "@/lib/db";
 import { createRedisConnection } from "@/lib/queue/connection";
+import { startHeartbeat } from "@/lib/queue/heartbeat";
 import { enqueuePublish, ensureDueScanner, PUBLISH_QUEUE } from "@/lib/queue/publish-queue";
 import { findDueSchedules, publishSchedule } from "@/lib/services/publishing";
 import { getAutomationsPaused } from "@/lib/services/settings";
 
 const concurrency = Math.max(1, Number(process.env.PUBLISH_CONCURRENCY) || 2);
+
+const stopHeartbeat = startHeartbeat("publish");
 
 const worker = new Worker(
   PUBLISH_QUEUE,
@@ -37,6 +40,7 @@ worker.on("error", (err) => console.error("[publish-worker] error:", err.message
 async function shutdown() {
   console.log("[publish-worker] cerrando…");
   await worker.close();
+  await stopHeartbeat();
   await prisma.$disconnect();
   process.exit(0);
 }

@@ -85,6 +85,8 @@ export default async function ContentDetail({ params, searchParams }: { params: 
             defaultText={post.imageText ?? ""}
             photos={libRows.filter((a) => a.type === "PHOTO").map((a) => ({ id: a.id, title: a.title }))}
             images={images.map((i) => ({ id: i.id, path: i.localPath!, title: i.title }))}
+            format={post.format}
+            primaryPhotoId={post.mediaAssetId}
           />
         )}
       </div>

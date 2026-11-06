@@ -133,6 +133,9 @@ export default async function PageDetail({ params, searchParams }: { params: Pro
                   windowStart: a?.windowStart ?? "09:00",
                   windowEnd: a?.windowEnd ?? "21:00",
                   editorialRestrictions: a?.editorialRestrictions ?? "",
+                  generationFrequency: (a?.generationFrequency as never) ?? "DAILY",
+                  publishDays: Array.isArray(a?.publishDays) ? (a!.publishDays as number[]) : [],
+                  allowedFormats: Array.isArray(a?.allowedFormats) ? (a!.allowedFormats as never[]) : [],
                 }}
               />
             </CardContent>

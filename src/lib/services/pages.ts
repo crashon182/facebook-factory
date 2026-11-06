@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { PAGE_SIZE } from "@/lib/constants";
 import { slugify } from "@/lib/slug";
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import type { AutomationValues, PageFormValues } from "@/lib/validation/page";
 import { removePostFiles } from "./contents";
 import { logActivity } from "./activity";
@@ -108,7 +108,14 @@ export async function setPageActive(id: string, isActive: boolean) {
 }
 
 export async function updateAutomation(pageId: string, v: AutomationValues) {
-  const data = { ...v, editorialRestrictions: v.editorialRestrictions || null };
+  const { publishDays, allowedFormats, generationFrequency, ...rest } = v;
+  const data = {
+    ...rest,
+    editorialRestrictions: v.editorialRestrictions || null,
+    ...(generationFrequency ? { generationFrequency } : {}),
+    ...(publishDays !== undefined ? { publishDays: publishDays.length ? [...new Set(publishDays)].sort() : Prisma.JsonNull } : {}),
+    ...(allowedFormats !== undefined ? { allowedFormats: allowedFormats.length ? [...new Set(allowedFormats)] : Prisma.JsonNull } : {}),
+  };
   const rule = await prisma.automationRule.upsert({
     where: { pageId },
     create: { pageId, ...data },

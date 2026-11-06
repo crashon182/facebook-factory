@@ -25,7 +25,7 @@ const done = (id?: string) => {
 
 export async function generateContentAction(input: unknown): Promise<ActionResult<{ id: string }>> {
   const user = await requireAdmin();
-  if (!rateLimit(`ai:content:${user.id}`, 10, 60_000).ok) return { ok: false, error: "Demasiadas generaciones seguidas. Esperá un minuto." };
+  if (!(await rateLimit(`ai:content:${user.id}`, 10, 60_000)).ok) return { ok: false, error: "Demasiadas generaciones seguidas. Esperá un minuto." };
   try {
     const id = await svc.generateContent(generateRequestSchema.parse(input));
     done();
@@ -60,7 +60,7 @@ export async function saveContentAction(id: string, input: unknown): Promise<Act
 
 export async function regenerateContentAction(id: string): Promise<ActionResult<null>> {
   const user = await requireAdmin();
-  if (!rateLimit(`ai:content:${user.id}`, 10, 60_000).ok) return { ok: false, error: "Demasiadas generaciones seguidas. Esperá un minuto." };
+  if (!(await rateLimit(`ai:content:${user.id}`, 10, 60_000)).ok) return { ok: false, error: "Demasiadas generaciones seguidas. Esperá un minuto." };
   try {
     await svc.regenerateContent(id);
     done(id);

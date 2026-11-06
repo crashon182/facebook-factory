@@ -34,9 +34,13 @@ describe("automationSchema", () => {
 
 describe("utilidades", () => {
   it("slugify quita acentos", () => expect(slugify("Reflexiones para la Vida!")).toBe("reflexiones-para-la-vida"));
-  it("rateLimit bloquea al exceder", () => {
+  it("rateLimit (Redis) bloquea al exceder y vuelve a permitir al vencer la ventana", async () => {
     const k = `t-${Math.random()}`;
-    for (let i = 0; i < 3; i++) expect(rateLimit(k, 3, 1000).ok).toBe(true);
-    expect(rateLimit(k, 3, 1000).ok).toBe(false);
+    for (let i = 0; i < 3; i++) expect((await rateLimit(k, 3, 400)).ok).toBe(true);
+    const blocked = await rateLimit(k, 3, 400);
+    expect(blocked.ok).toBe(false);
+    expect(blocked.retryAfterMs).toBeGreaterThan(0);
+    await new Promise((r) => setTimeout(r, 450));
+    expect((await rateLimit(k, 3, 400)).ok).toBe(true);
   });
 });

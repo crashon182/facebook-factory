@@ -3,11 +3,14 @@ import "dotenv/config";
 import { Worker } from "bullmq";
 import { prisma } from "@/lib/db";
 import { createRedisConnection } from "@/lib/queue/connection";
+import { startHeartbeat } from "@/lib/queue/heartbeat";
 import { RENDER_ATTEMPTS, RENDER_QUEUE } from "@/lib/queue/render-queue";
 import { renderReel } from "@/lib/video/reel";
 import { cleanOldTmp } from "@/lib/storage";
 
 const concurrency = Math.max(1, Number(process.env.RENDER_CONCURRENCY) || 1);
+
+const stopHeartbeat = startHeartbeat("render");
 
 const worker = new Worker(
   RENDER_QUEUE,
@@ -34,6 +37,7 @@ setInterval(() => void cleanOldTmp(), 3600_000).unref();
 async function shutdown() {
   console.log("[render-worker] cerrando…");
   await worker.close();
+  await stopHeartbeat();
   await prisma.$disconnect();
   process.exit(0);
 }

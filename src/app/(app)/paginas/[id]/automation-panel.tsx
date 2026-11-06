@@ -12,6 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { automationSchema, type AutomationValues } from "@/lib/validation/page";
+import { FORMAT_LABELS } from "@/lib/constants";
+import { FREQUENCIES, DEFAULT_FORMATS } from "@/lib/automation/plan";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { saveAutomationAction } from "../actions";
 
 type ToggleName = "enabled" | "requireApproval" | "autoPublish" | "autoOptimizeTimes";
@@ -56,7 +60,7 @@ export function AutomationPanel({ pageId, defaults, paused }: { pageId: string; 
         </p>
       )}
       <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
-        Estas reglas se guardan ahora; los workers que las ejecutan (generación, renderizado, publicación) se implementan en las Fases 2 a 5.
+        Estas reglas las ejecuta el worker de generación (proceso <code>worker:generate</code>) cada pocos minutos. Con «Aprobación manual» activa, nada se aprueba ni se programa sin vos.
       </p>
       <div className="grid gap-3 md:grid-cols-2">
         <Toggle control={control} name="enabled" label="Automatización activada" hint="Permite que el sistema prepare contenido para esta página." />
@@ -88,6 +92,48 @@ export function AutomationPanel({ pageId, defaults, paused }: { pageId: string; 
           <Label htmlFor="windowEnd">Franja hasta</Label>
           <Input id="windowEnd" type="time" {...register("windowEnd")} />
         </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Frecuencia de generación</Label>
+          <Controller control={control} name="generationFrequency" render={({ field }) => (
+            <Select value={field.value ?? "DAILY"} onValueChange={field.onChange}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>{Object.entries(FREQUENCIES).map(([k, f]) => <SelectItem key={k} value={k}>{f.label}</SelectItem>)}</SelectContent>
+            </Select>
+          )} />
+          <p className="text-xs text-muted-foreground">Cada cuánto el sistema prepara contenido nuevo (solo cuando falta stock).</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Días de publicación</Label>
+          <Controller control={control} name="publishDays" render={({ field }) => (
+            <div className="flex flex-wrap gap-1.5">
+              {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((d, i) => {
+                const on = (field.value ?? []).includes(i);
+                return <button key={d} type="button" aria-pressed={on} onClick={() => field.onChange(on ? (field.value ?? []).filter((x) => x !== i) : [...(field.value ?? []), i])}
+                  className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${on ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent"}`}>{d}</button>;
+              })}
+            </div>
+          )} />
+          <p className="text-xs text-muted-foreground">Sin selección = todos los días.</p>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label>Tipos de contenido permitidos</Label>
+        <Controller control={control} name="allowedFormats" render={({ field }) => (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {Object.entries(FORMAT_LABELS).map(([k, label]) => {
+              const list = (field.value ?? []) as string[];
+              return (
+                <label key={k} className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm">
+                  <Checkbox checked={list.includes(k)} onCheckedChange={(c) => field.onChange(c ? [...list, k] : list.filter((x) => x !== k))} />
+                  {label}{k === "REEL" || k === "IMAGE" ? <span className="text-[10px] text-muted-foreground">(requiere medios)</span> : null}
+                </label>
+              );
+            })}
+          </div>
+        )} />
+        <p className="text-xs text-muted-foreground">Sin selección se usan: {DEFAULT_FORMATS.map((f) => FORMAT_LABELS[f]).join(", ")}. Reel e Imagen requieren narración/proveedor de fotos configurados.</p>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="editorialRestrictions">Restricciones editoriales</Label>

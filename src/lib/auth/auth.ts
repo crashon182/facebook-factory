@@ -25,13 +25,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const { email, password } = parsed.data;
 
         const key = `login:${email}`;
-        if (!rateLimit(key, 5, 15 * 60 * 1000).ok) return null;
+        if (!(await rateLimit(key, 5, 15 * 60 * 1000)).ok) return null;
 
         const user = await prisma.user.findUnique({ where: { email } });
         const valid = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
         if (!user || !valid) return null;
 
-        resetRateLimit(key);
+        await resetRateLimit(key);
         return { id: user.id, email: user.email, name: user.name, role: user.role } as never;
       },
     }),

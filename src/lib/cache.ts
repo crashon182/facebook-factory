@@ -4,7 +4,7 @@ import Redis from "ioredis";
 let redis: Redis | null | undefined;
 const mem = new Map<string, { v: string; exp: number }>();
 
-function getRedis(): Redis | null {
+export function getRedis(): Redis | null {
   if (redis !== undefined) return redis;
   const url = process.env.REDIS_URL?.trim();
   if (!url) return (redis = null);
@@ -33,4 +33,16 @@ export async function cacheSet(key: string, value: unknown, ttlSec: number) {
   try {
     await getRedis()?.set(`ff:${key}`, s, "EX", ttlSec);
   } catch {}
+}
+
+/** Devuelve la conexión lista (espera hasta `timeoutMs` a que termine de conectarse) o null si no hay Redis. */
+export async function getReadyRedis(timeoutMs = 1500): Promise<Redis | null> {
+  const r = getRedis();
+  if (!r) return null;
+  if (r.status === "ready") return r;
+  return new Promise((resolve) => {
+    const t = setTimeout(() => { r.off("ready", onReady); resolve(null); }, timeoutMs);
+    const onReady = () => { clearTimeout(t); resolve(r); };
+    r.once("ready", onReady);
+  });
 }

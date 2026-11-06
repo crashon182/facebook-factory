@@ -1,8 +1,10 @@
-// Limitador en memoria (ventana deslizante). Suficiente para una instancia;
-// en la Fase 5 se reemplaza por una implementación con Redis para multi-instancia.
+import { getRedis } from "@/lib/cache";
+
+// Limitador de uso. Con Redis la cuenta es compartida entre procesos/instancias (ventana fija);
+// si Redis no responde cae a una ventana deslizante en memoria (nunca bloquea la aplicación por un fallo de Redis).
 const buckets = new Map<string, number[]>();
 
-export function rateLimit(key: string, limit: number, windowMs: number): { ok: boolean; retryAfterMs: number } {
+function memoryLimit(key: string, limit: number, windowMs: number) {
   const now = Date.now();
   const hits = (buckets.get(key) ?? []).filter((t) => now - t < windowMs);
   if (hits.length >= limit) {
@@ -14,6 +16,25 @@ export function rateLimit(key: string, limit: number, windowMs: number): { ok: b
   return { ok: true, retryAfterMs: 0 };
 }
 
-export function resetRateLimit(key: string) {
+export async function rateLimit(key: string, limit: number, windowMs: number): Promise<{ ok: boolean; retryAfterMs: number }> {
+  const r = getRedis();
+  if (r) {
+    try {
+      const k = `ff:rl:${key}`;
+      const n = await r.incr(k);
+      if (n === 1) await r.pexpire(k, windowMs);
+      if (n > limit) return { ok: false, retryAfterMs: Math.max(0, await r.pttl(k)) };
+      return { ok: true, retryAfterMs: 0 };
+    } catch {
+      /* respaldo en memoria */
+    }
+  }
+  return memoryLimit(key, limit, windowMs);
+}
+
+export async function resetRateLimit(key: string) {
   buckets.delete(key);
+  try {
+    await getRedis()?.del(`ff:rl:${key}`);
+  } catch {}
 }

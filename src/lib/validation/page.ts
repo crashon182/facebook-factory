@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CONTENT_FORMATS } from "./strategy";
 
 const optionalText = (max: number) =>
   z
@@ -76,6 +77,11 @@ export const automationSchema = z.object({
   windowStart: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   windowEnd: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   editorialRestrictions: z.string().trim().max(2000).optional(),
+  generationFrequency: z.enum(["HOURLY", "EVERY_6_HOURS", "DAILY", "WEEKLY"]).optional(),
+  /** 0 = domingo … 6 = sábado; vacío = todos los días */
+  publishDays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
+  /** vacío = formatos por defecto (los que no requieren fotos externas ni video) */
+  allowedFormats: z.array(z.enum(CONTENT_FORMATS)).optional(),
 });
 export type AutomationValues = z.infer<typeof automationSchema>;
 
