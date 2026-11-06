@@ -4,6 +4,7 @@ import { PAGE_SIZE } from "@/lib/constants";
 import { slugify } from "@/lib/slug";
 import type { Prisma } from "@/generated/prisma/client";
 import type { AutomationValues, PageFormValues } from "@/lib/validation/page";
+import { removePostFiles } from "./contents";
 import { logActivity } from "./activity";
 
 export type PageListQuery = {
@@ -95,7 +96,9 @@ export async function updatePage(id: string, values: PageFormValues) {
 }
 
 export async function deletePage(id: string) {
+  const postIds = (await prisma.contentPost.findMany({ where: { pageId: id }, select: { id: true } })).map((p) => p.id);
   const page = await prisma.socialPage.delete({ where: { id } });
+  await Promise.all(postIds.map(removePostFiles));
   await logActivity({ action: "page.deleted", message: `Página eliminada: ${page.name}`, level: "WARN", entity: "SocialPage", entityId: id });
 }
 

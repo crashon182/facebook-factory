@@ -8,6 +8,7 @@ import { buildContentPrompt } from "@/lib/prompts/content";
 import { generatedContentSchema, type ContentEditInput, type GenerateRequest, contentEditSchema, type GeneratedContent } from "@/lib/validation/content";
 import { getActiveStrategy } from "./strategies";
 import { canTransition, isCancellable, isDeletable, isEditable, type PostStatus } from "./content-status";
+import { removeQuiet, resolveInStorage } from "@/lib/storage";
 import { logActivity } from "./activity";
 
 export class ContentError extends Error {}
@@ -67,7 +68,8 @@ async function runGeneration(postId: string, req: { pageId: string; format: Cont
       data: {
         internalTitle: data.internalTitle.slice(0, 200),
         topic: data.topic.slice(0, 300),
-        body: data.imageText && req.format === "QUOTE_IMAGE" ? `${data.body}\n\n[Frase en imagen] ${data.imageText}` : data.body,
+        body: data.body,
+        imageText: data.imageText?.trim() || null,
         facebookCaption: data.facebookCaption,
         script: data.script,
         hashtags: data.hashtags.map((h) => h.replace(/^#+/, "").trim()).filter(Boolean),
@@ -175,9 +177,16 @@ export async function cancelContent(id: string) {
   await logActivity({ action: "content.cancelled", message: `Contenido cancelado: ${p.internalTitle}`, level: "WARN", pageId: p.pageId, entity: "ContentPost", entityId: id });
 }
 
+/** Borra del disco los renders e imágenes generados de un contenido. */
+export async function removePostFiles(postId: string) {
+  await removeQuiet(resolveInStorage(`renders/${postId}`));
+  await removeQuiet(resolveInStorage(`images/${postId}`));
+}
+
 export async function deleteContent(id: string) {
   const p = await mustGet(id);
   if (!isDeletable(p.status as PostStatus)) throw new ContentError("No se puede eliminar un contenido programado, en publicación o publicado.");
   await prisma.contentPost.delete({ where: { id } });
+  await removePostFiles(id);
   await logActivity({ action: "content.deleted", message: `Contenido eliminado: ${p.internalTitle}`, level: "WARN", pageId: p.pageId, entity: "ContentPost", entityId: id });
 }

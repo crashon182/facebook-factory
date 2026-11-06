@@ -15,18 +15,21 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "worker:render": "NODE_OPTIONS=--conditions=react-server tsx src/workers/render.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.3",
     "@prisma/adapter-mariadb": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^6.7.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cn": "^0.5.2",
     "date-fns": "^4.4.0",
     "dotenv": "^18.0.9",
+    "ioredis": "^6.0.0",
     "lucide-react": "^1.70.0",
     "next": "16.4.5",
     "next-auth": "^5.0.0-beta.32",

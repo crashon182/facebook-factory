@@ -37,3 +37,13 @@ Regla: las rutas/acciones solo validan y delegan en `lib/services`; los servicio
 14. **Máquina de estados de contenido** en `content-status.ts` (pura y testeada). Solo se edita/regenera/borra en DRAFT, READY, FAILED o CANCELLED. Programar y publicar quedan para la Fase 4.
 15. **Anti-repetición:** hash normalizado del texto + hasta 2 intentos; si la IA repite dos veces el contenido queda FAILED con el motivo.
 16. **Errores de IA** se traducen a mensajes claros (401 clave, 404 modelo, 429 cuota) y quedan en `ContentPost.failureReason`.
+
+## Decisiones de la Fase 3
+17. **Cola BullMQ desde ya para los renders** (Redis ya es parte del stack). `jobId` determinista = encolar dos veces no duplica; el estado visible vive en `VideoRenderJob` (progreso, etapa, logs), no solo en Redis.
+18. **Worker = proceso Node aparte** (`tsx --conditions=react-server`, para que `server-only` no falle fuera de Next). Comparte servicios con la app.
+19. **FFmpeg sin shell** (`spawn` con argumentos) y textos por archivo (`textfile`), nunca interpolados en filtros.
+20. **Transiciones:** segmentos de escena con solape `FADE_SEC` y `xfade`; el audio se alinea con `apad`/`concat` para que video y voz duren lo mismo.
+21. **Duración objetivo:** si la narración excede >10%, se acelera hasta 1.3x; si aun así excede, se avisa en el log (no se recorta el guion en silencio).
+22. **Sin proveedor de música:** solo pistas subidas con licencia; el sistema no incluye ni descarga música.
+23. **Limpieza:** temporales >24 h se borran al iniciar el worker y cada hora; al eliminar un contenido o página se borran sus renders e imágenes.
+24. **Constantes puras separadas** (`image-templates-meta.ts`) para poder importarlas desde componentes de cliente sin arrastrar `node:fs`.

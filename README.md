@@ -1,11 +1,11 @@
 # Facebook Factory
 
-Plataforma privada (un único administrador) para gestionar varias páginas de Facebook, generar contenido con IA, programar publicaciones y analizar resultados. **Estado: Fases 1 y 2 completas** (base del sistema + IA). Ver [TASKS.md](TASKS.md) y [ARCHITECTURE.md](ARCHITECTURE.md).
+Plataforma privada (un único administrador) para gestionar varias páginas de Facebook, generar contenido con IA, programar publicaciones y analizar resultados. **Estado: Fases 1, 2 y 3 completas** (base + IA + multimedia y Reels). Ver [TASKS.md](TASKS.md) y [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Requisitos
 - Node.js 24 (LTS activo) y npm
 - MySQL 8 y Redis (para desarrollo: `docker compose up -d`)
-- FFmpeg (se usa desde la Fase 3)
+- FFmpeg con libx264, aac, libass y drawtext (`sudo apt install ffmpeg fonts-dejavu-core`)
 
 ## Instalación en desarrollo
 ```bash
@@ -33,8 +33,10 @@ npm run dev                    # http://localhost:3000
 | `OPENAI_MODEL` | no | Modelo a usar (por defecto `gpt-5.4-mini`) |
 | `OPENAI_PRICE_INPUT_PER_1M`, `OPENAI_PRICE_OUTPUT_PER_1M` | recomendadas | USD por millón de tokens del modelo elegido. **No se asumen precios**: sin ellos solo se cuentan tokens y el costo figura en 0 |
 | `OPENAI_DAILY_LIMIT_USD` | no | Tope global diario; el presupuesto por página se configura en su panel de automatización |
-| `PEXELS_API_KEY` | Fase 3 | Imágenes y video |
-| `TTS_PROVIDER`, `TTS_API_KEY` | Fase 3 | Narración de Reels |
+| `PEXELS_API_KEY`, `PIXABAY_API_KEY` | Fase 3 | Búsqueda de fotos y videos (cualquiera de las dos; sin ellas se pueden subir archivos propios). Pexels ha pausado la emisión de claves nuevas |
+| `TTS_PROVIDER`, `TTS_MODEL`, `TTS_VOICE` | no | Narración. Por defecto `openai` (reutiliza `OPENAI_API_KEY`, modelo `gpt-4o-mini-tts`) |
+| `MEDIA_PROVIDER`, `MEDIA_EXTRA_ALLOWED_HOSTS` | no | Proveedor activo y hosts extra permitidos para descargas |
+| `STORAGE_DIR`, `FFMPEG_PATH`, `FONT_DIR`, `RENDER_CONCURRENCY` | no | Ver `.env.example` |
 | `META_APP_ID`, `META_APP_SECRET`, `META_GRAPH_VERSION` | Fase 4 | OAuth y publicación |
 
 Sin las claves de integración, el sistema funciona y muestra esas integraciones como **«No configuradas»** en *Configuración*. Nada se simula.
@@ -43,6 +45,7 @@ Sin las claves de integración, el sistema funciona y muestra esas integraciones
 | Comando | Acción |
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js |
+| `npm run worker:render` | **Worker de renderizado de Reels** (proceso aparte; necesita Redis) |
 | `npm run typecheck` · `lint` · `test` | Verificaciones |
 | `npm run verify` | typecheck + lint + tests + build |
 | `npm run db:migrate` / `db:deploy` / `db:seed` / `db:studio` | Prisma |
@@ -64,3 +67,16 @@ Los tests de integración usan la base de datos real de `DATABASE_URL` (solo cre
 - **Estrategias:** versionadas en `PageStrategy` (generar, editar a mano, restaurar; el historial nunca se reescribe). Al guardar una versión se sincronizan categorías (`ContentPillar`) e ideas (`ContentIdea`).
 - **Contenidos:** generar (texto, imagen, imagen con frase, Reel con escenas, reflexión, educativo, inspiracional, historia), editar, duplicar, regenerar, aprobar, cancelar, eliminar. La IA recibe la estrategia, las restricciones editoriales y los últimos 25 contenidos; se detectan duplicados por hash.
 - La generación corre dentro de la petición del servidor (decenas de segundos). En la Fase 5 pasa a workers.
+
+## Multimedia y Reels (Fase 3)
+- **Proveedor intercambiable:** `MediaProvider` (`src/lib/integrations/media`). Hoy Pexels y Pixabay (selector en Multimedia; `MEDIA_PROVIDER` fija el que usan los Reels); para sumar otro basta implementar la interfaz y registrarlo. Además se pueden **subir archivos propios** (licencia obligatoria; el tipo se valida con ffprobe).
+- **Pexels:** API oficial, filtros de orientación y calidad, caché de 10 min (Redis, con respaldo en memoria), manejo de 429/401/errores, autor y licencia guardados en `MediaAsset`, sin descargas duplicadas (por id y por checksum).
+- **Descargas seguras (anti-SSRF):** solo https, solo hosts permitidos, IP pública verificada al conectar, redirecciones revalidadas, límite de tamaño/tiempo (`src/lib/net/safe-fetch.ts`).
+- **Archivos:** se guardan en `STORAGE_DIR` (fuera de `public/`) y se sirven solo a administradores por `/api/files/...` (con Range para el reproductor).
+- **Imágenes con frase:** 4 plantillas (clásico oscuro, claro, degradado de marca, foto con velo) en cuadrado o vertical, generadas con FFmpeg.
+- **Reels:** la petición solo encola (BullMQ); el worker hace narración (TTS con caché) → línea de tiempo → clips por escena → subtítulos ASS → composición con transiciones → verificación 1080×1920 H.264/AAC → miniatura. Progreso, logs, 3 reintentos con backoff, cancelación y limpieza de temporales.
+- **Música:** nunca se agrega sola; solo si elegís una pista que subiste con licencia registrada.
+- **Sin clip de proveedor** (no configurado o sin resultados) la escena usa un fondo generado con los colores de la página, y queda registrado en el log.
+- Los subtítulos se sincronizan **por proporción** dentro de la ventana de audio de cada escena (el TTS no entrega marcas por palabra).
+- Producción: instalar `ffmpeg` y `fonts-dejavu-core`, y mantener `npm run worker:render` corriendo (PM2 en la Fase 5).
+- **Pixabay:** API oficial (`/api/` y `/api/videos/`), consultas cacheadas 24 h (lo exigen sus términos), 100 pedidos/60 s con manejo de 429, atribución visible junto a los resultados, descarga a nuestro almacenamiento (no se enlazan sus URLs de forma permanente). Fotos hasta 1280 px (el original y Full HD requieren acceso ampliado de Pixabay). Los videos no tienen filtro de orientación en su API: se filtra del lado del servidor.

@@ -230,6 +230,7 @@ model ContentPost {
   body            String?       @db.Text
   facebookCaption String?       @db.Text
   script          String?       @db.Text
+  imageText       String?       @db.Text
   hashtags        Json?
   status          PostStatus    @default(DRAFT)
   approved        Boolean       @default(false)
@@ -286,6 +287,11 @@ model MediaAsset {
   height      Int?
   durationMs  Int?
   checksum    String?    @db.VarChar(64)
+  title       String?
+  keywords    Json?
+  mimeType    String?
+  sizeBytes   Int?
+  thumbPath   String?    @db.VarChar(1024)
   createdAt   DateTime   @default(now())
 
   page        SocialPage?  @relation(fields: [pageId], references: [id], onDelete: SetNull)
@@ -302,6 +308,8 @@ model VideoRenderJob {
   status        JobStatus @default(QUEUED)
   progress      Int       @default(0)
   durationSec   Int       @default(30)
+  options       Json?
+  stage         String?
   outputPath    String?   @db.VarChar(1024)
   thumbnailPath String?   @db.VarChar(1024)
   logs          String?   @db.LongText

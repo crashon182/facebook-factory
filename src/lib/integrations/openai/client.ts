@@ -23,7 +23,7 @@ export function getModel() {
 }
 
 let client: OpenAI | null = null;
-function getClient() {
+export function getOpenAIClient() {
   if (!isOpenAIConfigured()) throw new AINotConfiguredError();
   client ??= new OpenAI({ apiKey: process.env.OPENAI_API_KEY, maxRetries: 2, timeout: 120_000 });
   return client;
@@ -70,7 +70,7 @@ export type StructuredRequest<S extends z.ZodType> = {
 };
 
 export async function generateStructured<S extends z.ZodType>(req: StructuredRequest<S>): Promise<{ data: z.output<S>; costUsd: number; inputTokens: number; outputTokens: number }> {
-  const ai = getClient();
+  const ai = getOpenAIClient();
   await assertBudget(req.pageId);
   const model = getModel();
   try {

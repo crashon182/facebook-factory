@@ -29,10 +29,24 @@
 - [ ] Editor visual de las listas complejas de la estrategia (hoy JSON validado)
 - [ ] Uso de `ContentIdea` desde la UI (el generador ya lo soporta vía `ideaId`)
 
-## Fase 3 — Multimedia · Fase 4 — Meta y calendario · Fase 5 — Automatización · Fase 6 — Analíticas
-- [ ] `MediaProvider` + Pexels, FFmpeg, TTS, subtítulos, miniaturas
-- [ ] OAuth Meta, publicación con idempotencia/reconciliación, calendario (mes/semana/día/lista)
-- [ ] BullMQ + 3 workers + planificador sin duplicación, PM2, Nginx, backups MySQL, retención de temporales
+## Fase 3 — Multimedia y Reels ✅
+- [x] `MediaProvider` + Pexels (filtros, caché, límites, autor/licencia, sin duplicados) y subida de archivos propios
+- [x] Biblioteca multimedia, descargas anti-SSRF, servicio de archivos autenticado
+- [x] Plantillas de imagen con frase (4) y panel en el editor
+- [x] Motor de Reels FFmpeg + TTS + subtítulos + transiciones + miniatura, en worker BullMQ con progreso, logs, reintentos y cancelación
+- [x] Tests (76 en total) y prueba E2E real (OpenAI + worker + FFmpeg)
+
+### Pendiente / limitaciones de Fase 3
+- [x] Proveedor Pixabay agregado (Pexels tiene la emisión de claves pausada)
+- [ ] **Pexels y Pixabay no se probaron contra su API real hasta cargar la clave** (cubiertos con `fetch` simulado). Al cargarla, probar una búsqueda y una descarga; si algún dominio de descarga difiere, agregarlo en `MEDIA_EXTRA_ALLOWED_HOSTS`.
+- [ ] Subtítulos por proporción (no por palabra); evaluar transcripción con marcas de tiempo si se necesita más precisión
+- [ ] Voz y estilo de narración configurables desde la UI (hoy por entorno)
+- [ ] Proveedores adicionales de TTS y de multimedia
+- [ ] Gestión del worker con PM2 y monitoreo de la cola (Fase 5)
+
+## Fase 4 — Meta y calendario (siguiente) · Fase 5 — Automatización · Fase 6 — Analíticas
+- [ ] OAuth Meta, publicación con idempotencia/reconciliación, calendario (mes/semana/día/lista), programación
+- [ ] Workers restantes + planificador sin duplicación, PM2, Nginx, backups MySQL, retención de temporales
 - [ ] Métricas, informes semanales, optimización con experimentos reversibles
 
 ## Integraciones que requerirán credenciales

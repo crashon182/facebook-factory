@@ -64,22 +64,6 @@ export function ContentEditor({ post }: { post: EditorPost }) {
           </CardContent>
         </Card>
 
-        {post.scenes.length > 0 && (
-          <Card>
-            <CardHeader><CardTitle>Escenas del Reel</CardTitle><CardDescription>Las palabras clave se usarán en la Fase 3 para buscar clips.</CardDescription></CardHeader>
-            <CardContent>
-              <ol className="space-y-3">
-                {post.scenes.map((s) => (
-                  <li key={s.id} className="rounded-lg border p-3 text-sm">
-                    <div className="mb-1 text-xs font-medium text-muted-foreground">Escena {s.sceneOrder}</div>
-                    <p>{s.narration}</p>
-                    {s.visualKeywords.length > 0 && <p className="mt-1 text-xs text-muted-foreground">Clips: {s.visualKeywords.join(", ")}</p>}
-                  </li>
-                ))}
-              </ol>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       <div className="space-y-4">
