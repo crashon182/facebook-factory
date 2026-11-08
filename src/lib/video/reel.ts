@@ -8,7 +8,7 @@ import { getDefaultProvider } from "@/lib/integrations/media";
 import { getTTSProvider } from "@/lib/integrations/tts";
 import { importCandidate } from "@/lib/services/media";
 import { ensureDir, removeQuiet, resolveInStorage, storageRoot, toRel } from "@/lib/storage";
-import { ffmpeg, probe } from "./ffmpeg";
+import { ffmpeg, filterComplexFromFile, probe } from "./ffmpeg";
 import { buildAss, buildCues, cleanSubtitleText } from "./subtitles";
 import { computeTimeline, FADE_SEC } from "./timeline";
 
@@ -232,7 +232,7 @@ export async function renderReel(jobId: string, ctl: { attempt: number; maxAttem
     await ensureDir(path.dirname(outAbs));
     const inputs = [...segs.flatMap((s) => ["-i", s]), ...audioFiles.flatMap((a) => ["-i", a]), ...(music ? ["-stream_loop", "-1", "-i", music] : [])];
     await ffmpeg(
-      [...inputs, "-filter_complex_script", "graph.txt", "-map", "[v]", "-map", "[aout]", "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", "-r", String(FPS),
+      [...inputs, ...(await filterComplexFromFile("graph.txt")), "-map", "[v]", "-map", "[aout]", "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", "-r", String(FPS),
         "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart", "-t", tl.totalSec.toFixed(3), outAbs],
       { cwd: work, timeoutMs: 900_000, onProgressMs: (ms) => { void prisma.videoRenderJob.update({ where: { id: jobId }, data: { progress: Math.min(97, Math.round(70 + (27 * ms) / (tl.totalSec * 1000))) } }).catch(() => {}); } },
     );

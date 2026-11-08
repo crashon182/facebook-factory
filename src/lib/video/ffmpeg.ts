@@ -52,6 +52,19 @@ export function ffmpeg(args: string[], opts: RunOpts = {}) {
   return run(FFMPEG, full, opts);
 }
 
+let filterScriptFlag: string[] | undefined;
+
+/** Argumentos para leer el filtergraph desde un archivo: `-/filter_complex` (FFmpeg ≥ 7) o `-filter_complex_script` (versiones anteriores, eliminado en 7). */
+export async function filterComplexFromFile(file: string): Promise<string[]> {
+  if (!filterScriptFlag) {
+    const out = await run(FFMPEG, ["-version"], { timeoutMs: 10_000 });
+    const major = Number(/version\s+n?(\d+)/.exec(out)?.[1] ?? 0);
+    // Versiones git/N sin número de release (major 0) son recientes: usar la nueva sintaxis.
+    filterScriptFlag = major !== 0 && major < 7 ? ["-filter_complex_script"] : ["-/filter_complex"];
+  }
+  return [...filterScriptFlag, file];
+}
+
 export type ProbeResult = { durationSec: number; width: number | null; height: number | null; hasVideo: boolean; hasAudio: boolean; formatName: string };
 
 export async function probe(file: string): Promise<ProbeResult> {
