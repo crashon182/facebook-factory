@@ -7,6 +7,15 @@
 //
 // Las variables de entorno se leen del archivo .env del proyecto (Next.js y los workers lo cargan solos).
 const cwd = __dirname;
+// PM2 no lee el .env: el puerto se toma de la shell o, si no está, de la línea PORT= del .env (por defecto 3000).
+const port = (() => {
+  if (process.env.PORT) return process.env.PORT;
+  try {
+    const m = require("fs").readFileSync(require("path").join(cwd, ".env"), "utf8").match(/^\s*PORT\s*=\s*"?(\d+)"?/m);
+    if (m) return m[1];
+  } catch {}
+  return "3000";
+})();
 // Rutas RELATIVAS al cwd: PM2 ejecuta el script sin comillas, así que una ruta absoluta con espacios fallaría.
 const tsx = "node_modules/tsx/dist/cli.mjs";
 
@@ -40,7 +49,7 @@ module.exports = {
       ...base,
       name: "ff-web",
       script: "node_modules/next/dist/bin/next",
-      args: `start -p ${process.env.PORT || 3000} -H 127.0.0.1`, // solo escucha en loopback: lo expone Nginx
+      args: `start -p ${port} -H 127.0.0.1`, // solo escucha en loopback: lo expone Nginx
       env: { NODE_ENV: "production" },
       max_memory_restart: "1G",
       kill_timeout: 10000,

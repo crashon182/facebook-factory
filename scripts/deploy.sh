@@ -26,6 +26,9 @@ log "Recargando procesos (PM2)"
 pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save
 
+PORT="${PORT:-$(grep -E '^[[:space:]]*PORT=' .env | tail -1 | cut -d= -f2- | tr -d '" ' || true)}"
+PORT="${PORT:-3000}"
+
 log "Verificando salud"
 for i in $(seq 1 30); do
   if curl -fsS "http://127.0.0.1:${PORT:-3000}/api/health" >/dev/null 2>&1; then
