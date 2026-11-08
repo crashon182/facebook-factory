@@ -22,7 +22,9 @@ DB="$(DATABASE_URL="$DATABASE_URL" CNF="$CNF" node -e '
 STAMP="$(date +%Y%m%d-%H%M%S)"
 OUT="$BACKUP_DIR/ff-$DB-$STAMP.sql.gz"
 echo "[backup] volcando $DB → $OUT"
-mysqldump --defaults-extra-file="$CNF" --single-transaction --quick --routines --triggers --no-tablespaces --set-gtid-purged=OFF "$DB" | gzip -9 > "$OUT"
+# --set-gtid-purged existe solo en el mysqldump de MySQL; MariaDB falla si se la pasan.
+GTID_OPT=(); if mysqldump --help 2>/dev/null | grep -q -- '--set-gtid-purged'; then GTID_OPT=(--set-gtid-purged=OFF); fi
+mysqldump --defaults-extra-file="$CNF" --single-transaction --quick --routines --triggers --no-tablespaces ${GTID_OPT[@]+"${GTID_OPT[@]}"} "$DB" | gzip -9 > "$OUT"
 gzip -t "$OUT"                       # verifica que el archivo comprimido sea válido
 [ "$(stat -c %s "$OUT")" -gt 1024 ] || { echo "[backup] ERROR: el respaldo es sospechosamente pequeño" >&2; rm -f "$OUT"; exit 1; }
 chmod 600 "$OUT"
