@@ -5,6 +5,8 @@ Esta guía reemplaza a `docs/DEPLOY.md` cuando el servidor se administra con **C
 > Los pasos 1–7 se hacen **una sola vez, a mano**. Recién cuando la app funciona se activa el despliegue automático (paso 8).
 > Nada de esto se probó todavía en un servidor real: ante cualquier diferencia con tu CloudPanel, manda la salida del comando que falle.
 
+> Notas: PM2 y `scripts/deploy.sh` toman `PORT` del `.env` (si no está, 3000). Todo lo de la app (`npm`, `pm2`, `git`) se ejecuta como `SITIO`, nunca como root, y `deploy.sh` activa Node 22 con nvm porque por SSH no interactivo el PATH trae el Node del sistema.
+
 Notación: `SITIO` = usuario del sitio en CloudPanel, `DOMINIO` = el dominio del sitio, `RUTA` = `/home/SITIO/htdocs/DOMINIO`.
 
 ## 1. Sitio y base de datos en CloudPanel
