@@ -5,6 +5,18 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 log() { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
+
+# Por SSH no interactivo (GitHub Actions) el PATH trae el Node del sistema, no el que CloudPanel instala con nvm.
+# Cargamos nvm y usamos Node 22 (nvm.sh no tolera `set -u`).
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  set +u
+  # shellcheck disable=SC1091
+  . "$HOME/.nvm/nvm.sh"
+  nvm use 22 >/dev/null || { echo "No se pudo activar Node 22 con nvm (nvm install 22)." >&2; exit 1; }
+  set -u
+fi
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+[ "$NODE_MAJOR" -ge 22 ] || { echo "Se necesita Node >= 22 y hay $(node -v). Revisá nvm." >&2; exit 1; }
 [ -f .env ] || { echo "Falta el archivo .env (copiá .env.example y completalo)." >&2; exit 1; }
 command -v pm2 >/dev/null || { echo "PM2 no está instalado (npm i -g pm2)." >&2; exit 1; }
 
