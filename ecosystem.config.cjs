@@ -6,12 +6,15 @@
 //   ff-scheduler        Planificador: registra las tareas periódicas (UNA sola instancia)
 //
 // Las variables de entorno se leen del archivo .env del proyecto (Next.js y los workers lo cargan solos).
+/* eslint-disable @typescript-eslint/no-require-imports -- archivo CommonJS de PM2 */
+const fs = require("fs");
+const path = require("path");
 const cwd = __dirname;
 // PM2 no lee el .env: el puerto se toma de la shell o, si no está, de la línea PORT= del .env (por defecto 3000).
 const port = (() => {
   if (process.env.PORT) return process.env.PORT;
   try {
-    const m = require("fs").readFileSync(require("path").join(cwd, ".env"), "utf8").match(/^\s*PORT\s*=\s*"?(\d+)"?/m);
+    const m = fs.readFileSync(path.join(cwd, ".env"), "utf8").match(/^\s*PORT\s*=\s*"?(\d+)"?/m);
     if (m) return m[1];
   } catch {}
   return "3000";
