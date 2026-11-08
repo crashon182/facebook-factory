@@ -66,3 +66,12 @@ Todas las llamadas llevan `access_token` y `appsecret_proof` (HMAC-SHA256 del to
 - Proceso aparte: `npm run worker:publish` (escanea vencimientos cada 30 s con un *job scheduler* de BullMQ —una sola definición aunque haya varias instancias— y publica con concurrencia `PUBLISH_CONCURRENCY`, 2 por defecto).
 - La **pausa global** de automatizaciones detiene la publicación (lo programado queda esperando, sin consumir intentos).
 - Los horarios se guardan en UTC; el calendario y los formularios usan la zona horaria de cada página.
+
+## Páginas legales públicas (política de privacidad, condiciones y eliminación de datos)
+Meta las pide en **Configuración › Básica** de la app. El sistema las sirve sin login para cada página creada:
+
+- `https://DOMINIO/legal/SLUG/privacidad`
+- `https://DOMINIO/legal/SLUG/terminos`
+- `https://DOMINIO/legal/SLUG/eliminacion-de-datos`
+
+`SLUG` es el identificador de la página; en el detalle de cada página (pestaña Resumen) aparece la tarjeta «Páginas legales para Meta» con las URLs listas para copiar. El correo de contacto sale de `LEGAL_CONTACT_EMAIL` (o `ADMIN_EMAIL` si está vacío). Los textos son plantillas generales: revisalos y ajustalos a tu caso (`src/lib/legal.ts`).

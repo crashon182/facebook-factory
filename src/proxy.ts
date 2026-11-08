@@ -7,6 +7,6 @@ const { auth } = NextAuth(authConfig);
 export const proxy = auth;
 
 export const config = {
-  // Protege todo salvo assets estáticos, health check y rutas internas de Auth.js
-  matcher: ["/((?!api/auth|api/health|api/webhooks|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)"],
+  // Protege todo salvo assets estáticos, health check, rutas internas de Auth.js y las páginas legales públicas (/legal/...) que Meta necesita
+  matcher: ["/((?!api/auth|api/health|api/webhooks|legal/|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)"],
 };

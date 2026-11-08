@@ -13,6 +13,7 @@ import { isOpenAIConfigured } from "@/lib/integrations/openai/client";
 import { getAutomationsPaused } from "@/lib/services/settings";
 import { LANGUAGES } from "@/lib/constants";
 import { AutomationPanel } from "./automation-panel";
+import { LegalLinks } from "./legal-links";
 import { GenerateStrategyButton, StrategyPanel } from "./strategy-panel";
 
 export const metadata: Metadata = { title: "Detalle de página" };
@@ -96,6 +97,7 @@ export default async function PageDetail({ params, searchParams }: { params: Pro
                 <Button asChild variant="outline" size="sm" className="mt-2 w-full"><Link href={`/paginas/${page.id}/conectar`}>{page.connectionStatus === "CONNECTED" ? "Administrar conexión" : "Conectar con Facebook"}</Link></Button>
               </CardContent>
             </Card>
+            <LegalLinks slug={page.slug} baseUrl={process.env.AUTH_URL ?? ""} />
             <Card>
               <CardHeader><CardTitle>Contenido</CardTitle></CardHeader>
               <CardContent className="text-sm text-muted-foreground">
