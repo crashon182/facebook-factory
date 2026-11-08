@@ -8,9 +8,15 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const isLogged = !!auth?.user;
-      const isLogin = request.nextUrl.pathname === "/login";
-      if (isLogin) return isLogged ? Response.redirect(new URL("/", request.nextUrl)) : true;
-      return isLogged;
+      const { pathname, search, origin } = request.nextUrl;
+      // Detrás de Nginx el origen interno trae el puerto de la app (p. ej. :3007) y las redirecciones salían a una URL
+      // inalcanzable. Usamos la URL pública (AUTH_URL) para construirlas.
+      const base = process.env.AUTH_URL?.trim().replace(/\/+$/, "") || origin;
+      if (pathname === "/login") return isLogged ? Response.redirect(new URL("/", base)) : true;
+      if (isLogged) return true;
+      const login = new URL("/login", base);
+      login.searchParams.set("callbackUrl", new URL(pathname + search, base).href);
+      return Response.redirect(login);
     },
     jwt({ token, user }) {
       if (user) {
