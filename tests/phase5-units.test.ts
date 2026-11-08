@@ -66,7 +66,7 @@ describe("colas y planificador (Redis real)", () => {
     await ensureDueScanner();
     await ensureDueScanner();
     const auto = await getAutomationQueue().getJobSchedulers();
-    expect(auto.map((s) => s.key).sort()).toEqual(["automation-tick", "maintenance-daily"]);
+    expect(auto.map((s) => s.key).sort()).toEqual(["automation-tick", "maintenance-daily", "metrics-collect", "optimize-daily", "weekly-reports"]);
     expect((await getPublishQueue().getJobSchedulers()).map((s) => s.key)).toEqual(["due-scanner"]);
   });
 

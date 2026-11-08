@@ -10,6 +10,8 @@ export type ReelStatus = {
   publishStatus: string | null;     // draft | scheduled | published | error
   errors: string[];
 };
+export type InsightPoint = { value: number; endTime: string | null };
+export type PostEngagement = { reactions: number | null; comments: number | null; shares: number | null };
 export type RecentPost = { id: string; message: string | null; createdTime: string | null };
 
 /** appsecret_proof = HMAC-SHA256(access_token, app_secret) en hex (https://developers.facebook.com/docs/graph-api/securing-requests). */
@@ -151,6 +153,37 @@ export class MetaClient {
     const s = r.status;
     const errors = [...(s?.uploading_phase?.errors?.map((e) => e.message ?? "error de subida") ?? []), ...(s?.processing_phase?.error?.message ? [s.processing_phase.error.message] : [])];
     return { videoStatus: s?.video_status ?? null, publishStatus: s?.publishing_phase?.publish_status ?? null, errors };
+  }
+
+  /**
+   * GET /{object-id}/insights?metric=… (una métrica por llamada: si Meta retira una, solo falla esa).
+   * Devuelve solo valores numéricos (ignora desgloses por objeto).
+   */
+  async insightSeries(objectId: string, token: string, metric: string, p: { period: "day" | "week" | "days_28" | "lifetime"; since?: number; until?: number }): Promise<InsightPoint[]> {
+    const r = await this.get<{ data?: { values?: { value?: unknown; end_time?: string }[] }[] }>(`${objectId}/insights`, { metric, period: p.period, since: p.since, until: p.until }, token);
+    const values = r.data?.[0]?.values ?? [];
+    return values.flatMap((v) => (typeof v.value === "number" && Number.isFinite(v.value) ? [{ value: v.value, endTime: v.end_time ?? null }] : []));
+  }
+
+  /** GET /{page-id}?fields=followers_count,fan_count */
+  async pageFollowers(pageId: string, token: string): Promise<number | null> {
+    const r = await this.get<{ followers_count?: number; fan_count?: number }>(pageId, { fields: "followers_count,fan_count" }, token);
+    return r.followers_count ?? r.fan_count ?? null;
+  }
+
+  /** Reacciones, comentarios y compartidos de una publicación (conteos del grafo, no requieren Insights). */
+  async postEngagement(postId: string, token: string): Promise<PostEngagement> {
+    const read = async (fields: string) =>
+      this.get<{ reactions?: { summary?: { total_count?: number } }; comments?: { summary?: { total_count?: number } }; shares?: { count?: number } }>(postId, { fields }, token);
+    let r: Awaited<ReturnType<typeof read>>;
+    try {
+      r = await read("reactions.summary(true).limit(0),comments.summary(true).limit(0),shares");
+    } catch (e) {
+      // Algunos nodos (p. ej. videos de Reels) no tienen el campo `shares`: reintentar sin él.
+      if (!(e instanceof MetaApiError) || e.kind !== "invalid") throw e;
+      r = await read("reactions.summary(true).limit(0),comments.summary(true).limit(0)");
+    }
+    return { reactions: r.reactions?.summary?.total_count ?? null, comments: r.comments?.summary?.total_count ?? null, shares: r.shares?.count ?? 0 };
   }
 
   /** GET /{page-id}/feed (para reconciliar publicaciones de texto/foto tras un resultado ambiguo). */

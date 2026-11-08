@@ -18,7 +18,7 @@ Verificado contra la documentación oficial el 2026-11-06. La versión de Graph 
 | `pages_show_list` | Listar las Páginas que administrás |
 | `pages_manage_posts` | Publicar texto, fotos y Reels |
 | `pages_read_engagement` | Leer publicaciones/estado de la Página (y reconciliar) |
-| `read_insights` | Métricas (Fase 6) |
+| `read_insights` | Métricas de la Página y de las publicaciones (Fase 6) |
 
 Tu usuario debe tener en la Página la tarea **CREATE_CONTENT** (rol de Editor o superior). El sistema lo verifica al conectar.
 

@@ -75,9 +75,21 @@
 - [ ] La generación manual con IA sigue ejecutándose dentro de la petición web (la automática ya corre en worker)
 - [ ] Alertas: `monitor.sh` + webhook; falta integración con un sistema de métricas (Prometheus/Grafana) si se necesita
 
-## Fase 6 — Analíticas y optimización (siguiente)
-- [ ] Recopilar métricas de Meta (Insights) con snapshots históricos; dashboards por página y consolidados
-- [ ] Informes semanales con IA, indicadores normalizados, experimentos reversibles, ajustes graduales del calendario (sin superar límites sin autorización)
+## Fase 6 — Analíticas y optimización ✅
+- [x] Recopilación de métricas de Meta (Insights + reacciones/comentarios/compartidos) con snapshots históricos: cada 6 h, cadencia por antigüedad de la publicación (3 h / 12 h / 24 h), idempotente, tolerante a métricas retiradas (cada una se pide por separado; las no disponibles se registran)
+- [x] Panel `/analiticas`: consolidado y por página (7/30/90 días), comparación con el período anterior, evolución, rendimiento por hora y por formato, publicaciones del período
+- [x] Indicadores normalizados: índice = tasa de interacción / mediana de la página (comparable entre páginas y formatos); no se calcula con menos de 3 muestras
+- [x] Informe semanal con IA (lunes 08:00 UTC o a demanda): usa solo los datos medidos, respeta el presupuesto diario de la página; las sugerencias de la IA quedan como propuestas
+- [x] Experimentos reversibles de horario: mueve la franja ≤ 1 h por vez, conserva su ancho, dentro de 06:00–23:00, sin tocar máximo diario ni presupuesto; un solo experimento activo y enfriamiento de 7 días; con `autoOptimizeTimes` se aplica solo, si no requiere aprobación; a los 7 días se evalúa y se revierte si la interacción cae ≥ 15 % (o si faltan datos tras una prórroga)
+- [x] Tests (185 en total)
+
+### Pendiente / limitaciones de Fase 6
+- [ ] **Nada se probó contra Meta real.** Los nombres de métricas (`page_media_view`, `page_total_media_view_unique`, `page_post_engagements`, `post_media_view`, `post_total_media_view_unique`) siguen la documentación vigente, pero Meta los viene cambiando; son configurables con `META_*_METRIC`. Al conectar una Página real, correr «Recopilar ahora» y revisar en el registro de actividad cuáles figuran como «no disponibles». Para Reels, verificar si hay que usar una métrica específica de reproducciones.
+- [ ] Retención en el watch time y retención de video no se miden (columnas `watchTimeSec`/`retention` sin usar)
+- [ ] El tamaño de muestra por hora es chico al principio: hasta tener ≥ 8 publicaciones medidas no se recomienda ningún horario
+- [ ] La optimización solo actúa sobre la franja horaria; las demás sugerencias de la IA son manuales
+- [ ] Los snapshots de métricas no tienen política de retención (crecen ~4 filas por publicación en sus primeros días)
+- [ ] Informes por correo/mensajería
 
 ## Integraciones que requerirán credenciales
 OpenAI (F2) · Pexels (F3) · TTS (F3) · Meta App con permisos y revisión de la app (F4).
