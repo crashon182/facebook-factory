@@ -50,7 +50,7 @@ async function narrate(page: SocialPage, text: string, voice: string | undefined
   const tts = getTTSProvider();
   if (!tts) throw new Error("La narración (TTS) no está configurada.");
   const clean = cleanSubtitleText(text);
-  const model = process.env.TTS_MODEL?.trim() || "default";
+  const model = tts.cacheTag?.(voice) ?? (process.env.TTS_MODEL?.trim() || "default");
   const key = createHash("sha1").update([tts.id, model, voice ?? "", page.language, clean].join("|")).digest("hex");
   const file = path.join(storageRoot(), "tts-cache", `${key}.mp3`);
   if (await exists(file)) {

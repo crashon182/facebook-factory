@@ -6,4 +6,6 @@ export interface TTSProvider {
   readonly id: string;
   isConfigured(): boolean;
   synthesize(req: SynthesizeRequest): Promise<SynthesizeResult>;
+  /** Opcional: parte de la clave de la caché de narraciones (modelo y voz efectivos). */
+  cacheTag?(voice?: string): string;
 }

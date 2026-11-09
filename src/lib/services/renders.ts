@@ -12,7 +12,7 @@ export async function requestRender(postId: string, opts: { durationSec: number;
   if (!post) throw new RenderError("El contenido no existe.");
   if (post.format !== "REEL") throw new RenderError("Solo los contenidos de formato Reel se renderizan como video.");
   if (post.scenes.length === 0) throw new RenderError("El Reel no tiene escenas. Regeneralo o agregá escenas.");
-  if (!getTTSProvider()) throw new RenderError("La narración (TTS) no está configurada: falta OPENAI_API_KEY o TTS_PROVIDER válido.");
+  if (!getTTSProvider()) throw new RenderError("La narración (TTS) no está configurada: falta OPENAI_API_KEY (o GEMINI_API_KEY con TTS_PROVIDER=gemini).");
   if (!process.env.REDIS_URL?.trim()) throw new RenderError("Redis no está configurado (REDIS_URL).");
   if (!Number.isInteger(opts.durationSec) || opts.durationSec < 5 || opts.durationSec > 90) throw new RenderError("Duración inválida (5 a 90 segundos).");
   const active = await prisma.videoRenderJob.findFirst({ where: { postId, status: { in: ["QUEUED", "RUNNING"] } } });

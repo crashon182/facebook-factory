@@ -35,6 +35,7 @@ npm run dev                    # http://localhost:3000
 | `OPENAI_DAILY_LIMIT_USD` | no | Tope global diario; el presupuesto por página se configura en su panel de automatización |
 | `PEXELS_API_KEY`, `PIXABAY_API_KEY` | Fase 3 | Búsqueda de fotos y videos (cualquiera de las dos; sin ellas se pueden subir archivos propios). Pexels ha pausado la emisión de claves nuevas |
 | `TTS_PROVIDER`, `TTS_MODEL`, `TTS_VOICE` | no | Narración. Por defecto `openai` (reutiliza `OPENAI_API_KEY`, modelo `gpt-4o-mini-tts`) |
+| `GEMINI_API_KEY`, `GEMINI_TTS_MODEL`, `GEMINI_TTS_VOICE` | no | Narración con Gemini: poné `TTS_PROVIDER=gemini` (modelo por defecto `gemini-3.8-flash-tts`, voz `Sulafat`) |
 | `MEDIA_PROVIDER`, `MEDIA_EXTRA_ALLOWED_HOSTS` | no | Proveedor activo y hosts extra permitidos para descargas |
 | `STORAGE_DIR`, `FFMPEG_PATH`, `FONT_DIR`, `RENDER_CONCURRENCY` | no | Ver `.env.example` |
 | `META_APP_ID`, `META_APP_SECRET` | Fase 4 | OAuth y publicación (ver `docs/META.md`) |
