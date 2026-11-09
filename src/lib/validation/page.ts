@@ -46,6 +46,7 @@ export const pageFormSchema = z.object({
   primaryColor: hexColor,
   secondaryColor: hexColor,
   isActive: z.boolean().default(true),
+  bibleVerses: z.boolean().default(false),
   facebookPageId: z
     .string()
     .trim()

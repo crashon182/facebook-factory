@@ -17,7 +17,7 @@ const PREFIX = "TEST_ff2_";
 let pageId = "";
 const post = (over: object = {}) => ({
   internalTitle: "Título IA", topic: "Esperanza", body: "Cuerpo", facebookCaption: "Texto único " + Math.random(),
-  script: null, imageText: null, hashtags: ["#fe", "paz"], imageKeywords: [], scenes: [], ...over,
+  script: null, imageText: null, verseReference: null, verseText: null, hashtags: ["#fe", "paz"], imageKeywords: [], scenes: [], ...over,
 });
 
 beforeAll(async () => {

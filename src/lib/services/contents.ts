@@ -10,6 +10,7 @@ import { getActiveStrategy } from "./strategies";
 import { canTransition, isCancellable, isDeletable, isEditable, type PostStatus } from "./content-status";
 import { removeQuiet, resolveInStorage } from "@/lib/storage";
 import { logActivity } from "./activity";
+import { ensureVerseOutro } from "@/lib/bible";
 
 export class ContentError extends Error {}
 
@@ -60,6 +61,10 @@ async function runGeneration(postId: string, req: { pageId: string; format: Cont
   }
   if (!out) throw new ContentError("No se generó contenido.");
   const data = out;
+  // Versículo: solo si la página lo pide. En Reels, la última escena es siempre el versículo con su cita.
+  const verseReference = page.bibleVerses ? data.verseReference?.trim().slice(0, 160) || null : null;
+  const verseText = page.bibleVerses ? data.verseText?.trim() || null : null;
+  const scenes = req.format === "REEL" ? ensureVerseOutro(data.scenes, verseReference, verseText) : data.scenes;
 
   await prisma.$transaction(async (tx) => {
     await tx.contentScene.deleteMany({ where: { postId } });
@@ -70,6 +75,8 @@ async function runGeneration(postId: string, req: { pageId: string; format: Cont
         topic: data.topic.slice(0, 300),
         body: data.body,
         imageText: data.imageText?.trim() || null,
+        verseReference,
+        verseText,
         imageKeywords: data.imageKeywords.map((k) => k.trim()).filter(Boolean).slice(0, 8),
         facebookCaption: data.facebookCaption,
         script: data.script,
@@ -80,8 +87,8 @@ async function runGeneration(postId: string, req: { pageId: string; format: Cont
         failureReason: null,
       },
     });
-    if (req.format === "REEL" && data.scenes.length) {
-      await tx.contentScene.createMany({ data: data.scenes.map((s, i) => ({ postId, sceneOrder: i + 1, narration: s.narration, visualKeywords: s.visualKeywords })) });
+    if (req.format === "REEL" && scenes.length) {
+      await tx.contentScene.createMany({ data: scenes.map((s, i) => ({ postId, sceneOrder: i + 1, narration: s.narration, visualKeywords: s.visualKeywords })) });
     }
     if (req.ideaId) await tx.contentIdea.update({ where: { id: req.ideaId }, data: { status: "USED" } });
   });

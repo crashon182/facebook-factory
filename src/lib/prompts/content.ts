@@ -1,5 +1,6 @@
 import type { AutomationRule, SocialPage } from "@/generated/prisma/client";
 import type { Strategy } from "@/lib/validation/strategy";
+import { bibleVersion } from "@/lib/bible";
 
 const LANG: Record<string, string> = { es: "español", en: "inglés", pt: "portugués", fr: "francés", it: "italiano", de: "alemán" };
 
@@ -13,6 +14,20 @@ const FORMAT_GUIDE: Record<string, string> = {
   INSPIRATIONAL: "Contenido inspiracional breve y emotivo, 40–120 palabras. `scenes` vacío.",
   SHORT_STORY: "Historia corta con inicio, giro y cierre, 120–250 palabras. `scenes` vacío.",
 };
+
+/** Reglas cuando la página incluye un versículo bíblico en cada contenido. */
+function verseRules(format: string): string[] {
+  const rules = [
+    "Esta página incluye un versículo bíblico en CADA contenido:",
+    `- Elegí UN versículo (o un pasaje de hasta 2 versículos seguidos) y hacé que el contenido gire en torno a él.`,
+    `- \`verseReference\`: libro capítulo:versículo, p. ej. «Filipenses 4:6-7». \`verseText\`: el texto EXACTO en la versión ${bibleVersion()}, palabra por palabra, sin parafrasear, sin mezclar versiones y sin comillas ni la cita dentro.`,
+    "- Si no estás seguro del texto exacto de un versículo, elegí otro que conozcas con certeza. Nunca inventes ni adaptes un versículo.",
+    "- `facebookCaption` debe terminar con la referencia del versículo.",
+  ];
+  if (format === "QUOTE_IMAGE") rules.push("- Para este formato, `imageText` debe ser exactamente `verseText` (sin la referencia). La reflexión va en `body` y `facebookCaption`, no en la imagen.");
+  if (format === "REEL") rules.push("- Reel: el sistema agrega al final una escena que lee el versículo y su cita; no la incluyas vos en `scenes` ni repitas el versículo completo en la última escena. El guion debe conducir naturalmente hacia ese versículo.");
+  return rules;
+}
 
 export function buildContentPrompt(opts: {
   page: SocialPage;
@@ -36,6 +51,7 @@ export function buildContentPrompt(opts: {
     "- `hashtags`: 3–6 relevantes, sin el símbolo #.",
     "- `internalTitle`: título interno breve (máx. 80 caracteres). `topic`: tema en pocas palabras.",
     `Formato solicitado (${format}): ${FORMAT_GUIDE[format] ?? ""}`,
+    ...(page.bibleVerses ? verseRules(format) : ["- `verseReference` y `verseText` van en null."]),
   ].join("\n");
 
   const user = [

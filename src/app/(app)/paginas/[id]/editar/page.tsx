@@ -24,7 +24,7 @@ export default async function EditPageRoute({ params }: { params: Promise<{ id: 
           timezone: page.timezone, tone: page.tone ?? "", growthGoals: page.growthGoals ?? "",
           profileImageUrl: page.profileImageUrl ?? "", visualIdentity: page.visualIdentity ?? "",
           primaryColor: page.primaryColor ?? "#4f46e5", secondaryColor: page.secondaryColor ?? "#7c3aed",
-          isActive: page.isActive, facebookPageId: page.facebookPageId ?? "",
+          isActive: page.isActive, bibleVerses: page.bibleVerses, facebookPageId: page.facebookPageId ?? "",
         }}
       />
     </div>

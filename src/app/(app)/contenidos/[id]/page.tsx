@@ -53,7 +53,7 @@ export default async function ContentDetail({ params, searchParams }: { params: 
         key={post.updatedAt.toISOString()}
         post={{
           id: post.id, status: post.status as PostStatus, approved: post.approved, format: post.format, internalTitle: post.internalTitle,
-          topic: post.topic ?? "", body: post.body ?? "", facebookCaption: post.facebookCaption ?? "", script: post.script ?? "", hashtags: tags,
+          topic: post.topic ?? "", body: post.body ?? "", facebookCaption: post.facebookCaption ?? "", script: post.script ?? "", verseReference: post.verseReference ?? "", verseText: post.verseText ?? "", hashtags: tags,
           failureReason: post.failureReason,
           scenes: post.scenes.map((s) => ({ id: s.id, sceneOrder: s.sceneOrder, narration: s.narration, visualKeywords: Array.isArray(s.visualKeywords) ? (s.visualKeywords as string[]) : [] })),
         }}
@@ -83,7 +83,8 @@ export default async function ContentDetail({ params, searchParams }: { params: 
           <ImagePanel
             postId={post.id}
             editable={isEditable(post.status as PostStatus)}
-            defaultText={post.imageText ?? ""}
+            defaultText={post.imageText ?? post.verseText ?? ""}
+            defaultAttribution={post.verseReference ?? ""}
             photos={libRows.filter((a) => a.type === "PHOTO").map((a) => ({ id: a.id, title: a.title }))}
             images={images.map((i) => ({ id: i.id, path: i.localPath!, title: i.title }))}
             format={post.format}

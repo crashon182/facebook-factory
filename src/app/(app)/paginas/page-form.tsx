@@ -38,7 +38,7 @@ export function PageForm({ pageId, defaults, openaiConfigured }: { pageId?: stri
     defaultValues: {
       name: "", description: "", topic: "", targetAudience: "", language: "es", targetCountry: "",
       timezone: "America/Argentina/Buenos_Aires", tone: "", growthGoals: "", profileImageUrl: "",
-      visualIdentity: "", primaryColor: "#4f46e5", secondaryColor: "#7c3aed", isActive: true, facebookPageId: "",
+      visualIdentity: "", primaryColor: "#4f46e5", secondaryColor: "#7c3aed", isActive: true, bibleVerses: false, facebookPageId: "",
       ...defaults,
     },
   });
@@ -167,6 +167,14 @@ export function PageForm({ pageId, defaults, openaiConfigured }: { pageId?: stri
         <CardContent className="grid gap-4 md:grid-cols-2">
           <Field label="Facebook Page ID" error={err("facebookPageId")} htmlFor="facebookPageId">
             <Input id="facebookPageId" inputMode="numeric" placeholder="123456789012345" {...register("facebookPageId")} />
+          </Field>
+          <Field label="Versículo bíblico en cada contenido" hint="La IA elige un versículo y lo usa: las imágenes lo llevan como frase y los Reels terminan leyéndolo. Revisá siempre el texto antes de publicar.">
+            <Controller control={control} name="bibleVerses" render={({ field }) => (
+              <div className="flex h-9 items-center gap-3">
+                <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+                <span className="text-sm text-muted-foreground">{field.value ? "Activado" : "Desactivado"}</span>
+              </div>
+            )} />
           </Field>
           <Field label="Página activa">
             <Controller control={control} name="isActive" render={({ field }) => (

@@ -30,6 +30,7 @@ npm run dev                    # http://localhost:3000
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | para el seed | La contraseña debe tener ≥ 12 caracteres |
 | `REDIS_URL` | Fase 5 | Colas BullMQ |
 | `OPENAI_API_KEY` | Fase 2 | Estrategias y contenido |
+| `BIBLE_VERSION` | no | Versión que cita la IA cuando la página tiene activado «Versículo bíblico» (por defecto `Reina-Valera 1960`; revisá sus derechos de uso) |
 | `OPENAI_MODEL` | no | Modelo a usar (por defecto `gpt-5.4-mini`) |
 | `OPENAI_PRICE_INPUT_PER_1M`, `OPENAI_PRICE_OUTPUT_PER_1M` | recomendadas | USD por millón de tokens del modelo elegido. **No se asumen precios**: sin ellos solo se cuentan tokens y el costo figura en 0 |
 | `OPENAI_DAILY_LIMIT_USD` | no | Tope global diario; el presupuesto por página se configura en su panel de automatización |

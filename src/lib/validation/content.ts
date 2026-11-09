@@ -9,6 +9,8 @@ export const generatedContentSchema = z.object({
   facebookCaption: z.string(),
   script: z.string().nullable(),
   imageText: z.string().nullable(),
+  verseReference: z.string().nullable(),
+  verseText: z.string().nullable(),
   hashtags: z.array(z.string()),
   imageKeywords: z.array(z.string()),
   scenes: z.array(z.object({ narration: z.string(), visualKeywords: z.array(z.string()) })),
@@ -33,6 +35,8 @@ export const contentEditSchema = z.object({
   body: z.string().trim().max(10000).optional().transform((v) => v || null),
   facebookCaption: z.string().trim().max(5000).optional().transform((v) => v || null),
   script: z.string().trim().max(10000).optional().transform((v) => v || null),
+  verseReference: z.string().trim().max(160).optional().transform((v) => v || null),
+  verseText: z.string().trim().max(2000).optional().transform((v) => v || null),
   hashtags: z.array(hashtag).max(30).default([]),
 });
 export type ContentEditInput = z.input<typeof contentEditSchema>;

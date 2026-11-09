@@ -33,7 +33,7 @@ export async function prepareMedia(postId: string, deps: Partial<MediaDeps> = {}
     const text = (post.imageText?.trim() || firstSentence(post.facebookCaption ?? post.body ?? "")).trim();
     if (text.length < 3) return "Sin frase para la imagen.";
     const branded = !!(post.page.primaryColor && post.page.secondaryColor);
-    await d.quoteImage(postId, { text, template: branded ? "brand-gradient" : "classic-dark", aspect: "square" });
+    await d.quoteImage(postId, { text, attribution: post.verseReference?.trim() || undefined, template: branded ? "brand-gradient" : "classic-dark", aspect: "square" });
     return "Imagen con frase generada.";
   }
 

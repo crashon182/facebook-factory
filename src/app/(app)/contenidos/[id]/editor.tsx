@@ -19,7 +19,7 @@ import {
 
 export type EditorPost = {
   id: string; status: PostStatus; approved: boolean; format: string; internalTitle: string; topic: string; body: string;
-  facebookCaption: string; script: string; hashtags: string[]; failureReason: string | null;
+  facebookCaption: string; script: string; verseReference: string; verseText: string; hashtags: string[]; failureReason: string | null;
   scenes: { id: string; sceneOrder: number; narration: string; visualKeywords: string[] }[];
 };
 
@@ -27,8 +27,8 @@ export function ContentEditor({ post }: { post: EditorPost }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [confirm, setConfirm] = useState<null | "delete" | "cancel" | "regen">(null);
-  const [f, setF] = useState({ internalTitle: post.internalTitle, topic: post.topic, body: post.body, facebookCaption: post.facebookCaption, script: post.script, hashtags: post.hashtags.join(", ") });
-  const dirty = JSON.stringify(f) !== JSON.stringify({ internalTitle: post.internalTitle, topic: post.topic, body: post.body, facebookCaption: post.facebookCaption, script: post.script, hashtags: post.hashtags.join(", ") });
+  const [f, setF] = useState({ internalTitle: post.internalTitle, topic: post.topic, body: post.body, facebookCaption: post.facebookCaption, script: post.script, verseReference: post.verseReference, verseText: post.verseText, hashtags: post.hashtags.join(", ") });
+  const dirty = JSON.stringify(f) !== JSON.stringify({ internalTitle: post.internalTitle, topic: post.topic, body: post.body, facebookCaption: post.facebookCaption, script: post.script, verseReference: post.verseReference, verseText: post.verseText, hashtags: post.hashtags.join(", ") });
   const editable = isEditable(post.status);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF((p) => ({ ...p, [k]: e.target.value }));
 
@@ -59,6 +59,16 @@ export function ContentEditor({ post }: { post: EditorPost }) {
             <div className="space-y-1.5"><Label htmlFor="b">Texto principal</Label><Textarea id="b" rows={5} value={f.body} onChange={set("body")} disabled={!editable} /></div>
             {(post.format === "REEL" || f.script) && (
               <div className="space-y-1.5"><Label htmlFor="s">Guion</Label><Textarea id="s" rows={6} value={f.script} onChange={set("script")} disabled={!editable} /></div>
+            )}
+            {(post.verseReference || post.verseText || post.format === "REEL" || post.format === "QUOTE_IMAGE") && (
+              <div className="space-y-3 rounded-lg border p-3">
+                <p className="text-sm font-medium">Versículo bíblico</p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1.5"><Label htmlFor="vr">Referencia</Label><Input id="vr" value={f.verseReference} onChange={set("verseReference")} disabled={!editable} maxLength={160} placeholder="Filipenses 4:6-7" /></div>
+                  <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="vt">Texto del versículo</Label><Textarea id="vt" rows={3} value={f.verseText} onChange={set("verseText")} disabled={!editable} maxLength={2000} /></div>
+                </div>
+                <p className="text-xs text-muted-foreground">Verificá la cita y el texto contra tu Biblia antes de aprobar: la IA puede equivocarse. En los Reels la última escena lee este versículo; si lo corregís acá, corregí también esa escena.</p>
+              </div>
             )}
             <div className="space-y-1.5"><Label htmlFor="h">Hashtags (separados por coma, sin #)</Label><Input id="h" value={f.hashtags} onChange={set("hashtags")} disabled={!editable} /></div>
           </CardContent>

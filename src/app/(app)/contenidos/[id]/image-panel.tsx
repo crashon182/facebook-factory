@@ -15,10 +15,10 @@ import { generateImageAction, setPostPhotoAction } from "../media-actions";
 
 export type PostImage = { id: string; path: string; title: string | null };
 
-export function ImagePanel({ postId, defaultText, photos, images, editable, format, primaryPhotoId, autoBackground }: { postId: string; defaultText: string; photos: { id: string; title: string }[]; images: PostImage[]; editable: boolean; format?: string; primaryPhotoId?: string | null; autoBackground?: string | null }) {
+export function ImagePanel({ postId, defaultText, photos, images, editable, format, primaryPhotoId, autoBackground, defaultAttribution }: { postId: string; defaultText: string; defaultAttribution?: string; photos: { id: string; title: string }[]; images: PostImage[]; editable: boolean; format?: string; primaryPhotoId?: string | null; autoBackground?: string | null }) {
   const router = useRouter();
   const [text, setText] = useState(defaultText);
-  const [attribution, setAttribution] = useState("");
+  const [attribution, setAttribution] = useState(defaultAttribution ?? "");
   const [template, setTemplate] = useState("classic-dark");
   const [aspect, setAspect] = useState("square");
   const [bg, setBg] = useState(autoBackground ? "auto" : "");
