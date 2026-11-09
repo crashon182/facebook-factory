@@ -55,7 +55,8 @@ export async function renderQuoteImage(opts: QuoteImageOptions): Promise<void> {
   const work = path.join(storageRoot(), "tmp", `img-${randomUUID()}`);
   await ensureDir(work);
   try {
-    await writeFile(path.join(work, "q.txt"), lines.join("\n"));
+    // Una línea por archivo: así cada línea se centra sola, sin `text_align` (que FFmpeg < 7 no tiene).
+    await Promise.all(lines.map((l, i) => writeFile(path.join(work, `q${i}.txt`), l || " ")));
     await writeFile(path.join(work, "a.txt"), o.attribution ? "— " + cleanSubtitleText(o.attribution) : " ");
     await writeFile(path.join(work, "b.txt"), cleanSubtitleText(o.brandName ?? "") || " ");
 
@@ -84,7 +85,7 @@ export async function renderQuoteImage(opts: QuoteImageOptions): Promise<void> {
     const filter = [
       bg,
       `[bg]drawbox=x=${Math.round(w / 2 - 50)}:y=${Math.max(40, y - 80)}:w=100:h=6:color=${barColor}:t=fill,` +
-        `drawtext=fontfile=${font}:textfile=q.txt:fontsize=${size}:fontcolor=${fg}:line_spacing=${Math.round(size * 0.14)}:x=(w-text_w)/2:y=${y}:text_align=center:borderw=${o.template === "photo-veil" || o.template === "brand-gradient" ? 2 : 0}:bordercolor=black@0.35,` +
+        lines.map((_, i) => `drawtext=fontfile=${font}:textfile=q${i}.txt:fontsize=${size}:fontcolor=${fg}:x=(w-text_w)/2:y=${y + i * lineH}:borderw=${o.template === "photo-veil" || o.template === "brand-gradient" ? 2 : 0}:bordercolor=black@0.35,`).join("") +
         `drawtext=fontfile=${FONT_BOLD()}:textfile=a.txt:fontsize=${Math.round(size * 0.5)}:fontcolor=${fg}@0.8:x=(w-text_w)/2:y=${y + textBlockH + 30},` +
         `drawtext=fontfile=${FONT_BOLD()}:textfile=b.txt:fontsize=30:fontcolor=${fg}@0.6:x=(w-text_w)/2:y=h-90[out]`,
     ].join(";");

@@ -13,7 +13,7 @@ import type { ActionResult } from "@/lib/action-result";
 function fail(e: unknown): { ok: false; error: string } {
   if (e instanceof z.ZodError) return { ok: false, error: z.prettifyError(e) };
   if (e instanceof RenderError || e instanceof ImageError) return { ok: false, error: e.message };
-  console.error("[content.media.action]", e instanceof Error ? e.message : e);
+  console.error("[content.media.action]", e instanceof Error ? e.message : e, (e as { stderrTail?: string })?.stderrTail ?? ""); // stderrTail: lo que dijo FFmpeg
   return { ok: false, error: "Ocurrió un error inesperado" };
 }
 
