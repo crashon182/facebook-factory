@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth/auth";
+import { publicUrl } from "@/lib/public-url";
 import { MetaClient } from "@/lib/integrations/meta/client";
 import { describeMetaError } from "@/lib/integrations/meta/errors";
 import { OAUTH_COOKIE, readOAuthState } from "@/lib/integrations/meta/oauth-state";
@@ -11,12 +12,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user) return NextResponse.redirect(new URL("/login", req.url));
+  if (!session?.user) return NextResponse.redirect(publicUrl("/login", req));
   const url = new URL(req.url);
   const jar = await cookies();
   const st = readOAuthState(jar.get(OAUTH_COOKIE)?.value, url.searchParams.get("state"));
   const done = (path: string) => {
-    const r = NextResponse.redirect(new URL(path, req.url));
+    const r = NextResponse.redirect(publicUrl(path, req));
     r.cookies.set(OAUTH_COOKIE, "", { path: "/api/meta/oauth", maxAge: 0 });
     return r;
   };

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
+import { publicUrl } from "@/lib/public-url";
 import { prisma } from "@/lib/db";
 import { MetaClient } from "@/lib/integrations/meta/client";
 import { isMetaConfigured } from "@/lib/integrations/meta/config";
@@ -9,11 +10,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user) return NextResponse.redirect(new URL("/login", req.url));
+  if (!session?.user) return NextResponse.redirect(publicUrl("/login", req));
   const pageId = new URL(req.url).searchParams.get("pageId") ?? "";
   const page = pageId ? await prisma.socialPage.findUnique({ where: { id: pageId }, select: { id: true } }) : null;
-  if (!page) return NextResponse.redirect(new URL("/paginas", req.url));
-  if (!isMetaConfigured()) return NextResponse.redirect(new URL(`/paginas/${page.id}/conectar?error=not_configured`, req.url));
+  if (!page) return NextResponse.redirect(publicUrl("/paginas", req));
+  if (!isMetaConfigured()) return NextResponse.redirect(publicUrl(`/paginas/${page.id}/conectar?error=not_configured`, req));
 
   const { state, cookie } = createOAuthState(page.id);
   const res = NextResponse.redirect(MetaClient.fromEnv().authorizeUrl(state));
