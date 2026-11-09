@@ -10,6 +10,7 @@ import { getContent } from "@/lib/services/contents";
 import type { PostStatus } from "@/lib/services/content-status";
 import { prisma } from "@/lib/db";
 import { getTTSProvider } from "@/lib/integrations/tts";
+import { getDefaultProvider } from "@/lib/integrations/media";
 import { listRenders } from "@/lib/services/renders";
 import { isEditable } from "@/lib/services/content-status";
 import { ContentEditor } from "./editor";
@@ -87,6 +88,7 @@ export default async function ContentDetail({ params, searchParams }: { params: 
             images={images.map((i) => ({ id: i.id, path: i.localPath!, title: i.title }))}
             format={post.format}
             primaryPhotoId={post.mediaAssetId}
+            autoBackground={getDefaultProvider()?.name ?? null}
           />
         )}
       </div>

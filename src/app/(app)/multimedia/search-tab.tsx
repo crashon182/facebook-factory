@@ -28,6 +28,7 @@ export function SearchTab({ providers }: { providers: ProviderInfo[] }) {
   const [quality, setQuality] = useState("medium");
   const [result, setResult] = useState<MediaSearchResult | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [bulk, setBulk] = useState<{ done: number; total: number } | null>(null);
   const [pending, start] = useTransition();
 
   function search(page = 1) {
@@ -45,6 +46,25 @@ export function SearchTab({ providers }: { providers: ProviderInfo[] }) {
       toast.success(res.data.duplicate ? "Ya estaba en la biblioteca" : "Guardado en la biblioteca");
       router.refresh();
     } else toast.error(res.error);
+  }
+
+  /** Guarda de a una (secuencial: no satura el servidor ni al proveedor) todas las fotos de la página de resultados. */
+  async function saveAll() {
+    const items = result?.items.filter((c) => c.kind === "photo") ?? [];
+    if (!items.length) return;
+    setBulk({ done: 0, total: items.length });
+    let added = 0, duplicated = 0, failed = 0;
+    for (const c of items) {
+      const res = await importMediaAction(c);
+      if (!res.ok) failed++;
+      else if (res.data.duplicate) duplicated++;
+      else added++;
+      setBulk((b) => (b ? { ...b, done: b.done + 1 } : b));
+    }
+    setBulk(null);
+    const parts = [`${added} guardadas`, duplicated ? `${duplicated} ya estaban` : "", failed ? `${failed} con error` : ""].filter(Boolean);
+    (failed ? toast.warning : toast.success)(parts.join(" · "));
+    router.refresh();
   }
 
   return (
@@ -76,6 +96,11 @@ export function SearchTab({ providers }: { providers: ProviderInfo[] }) {
       {result && result.items.length === 0 && <EmptyState icon={Search} title="Sin resultados" description="Probá con otras palabras clave (en inglés suele haber más resultados)." />}
       {result && result.items.length > 0 && (
         <>
+          {result.items.some((c) => c.kind === "photo") && (
+            <Button type="button" variant="outline" size="sm" disabled={!!bulk || !!saving} onClick={saveAll}>
+              {bulk ? <><Loader2 className="animate-spin" /> Guardando {bulk.done}/{bulk.total}…</> : <><Download /> Guardar todas las fotos de esta página ({result.items.filter((c) => c.kind === "photo").length})</>}
+            </Button>
+          )}
           <p className="text-xs text-muted-foreground">
             {provider.attribution && <><a href={provider.attribution.url} target="_blank" rel="noreferrer noopener" className="font-medium hover:underline">{provider.attribution.text}</a> · </>}
             {result.total.toLocaleString("es-AR")} resultados{result.rateLimitRemaining !== null ? ` · ${result.rateLimitRemaining} solicitudes restantes en la ventana de ${providerName}` : ""}</p>

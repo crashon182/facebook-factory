@@ -15,13 +15,13 @@ import { generateImageAction, setPostPhotoAction } from "../media-actions";
 
 export type PostImage = { id: string; path: string; title: string | null };
 
-export function ImagePanel({ postId, defaultText, photos, images, editable, format, primaryPhotoId }: { postId: string; defaultText: string; photos: { id: string; title: string }[]; images: PostImage[]; editable: boolean; format?: string; primaryPhotoId?: string | null }) {
+export function ImagePanel({ postId, defaultText, photos, images, editable, format, primaryPhotoId, autoBackground }: { postId: string; defaultText: string; photos: { id: string; title: string }[]; images: PostImage[]; editable: boolean; format?: string; primaryPhotoId?: string | null; autoBackground?: string | null }) {
   const router = useRouter();
   const [text, setText] = useState(defaultText);
   const [attribution, setAttribution] = useState("");
   const [template, setTemplate] = useState("classic-dark");
   const [aspect, setAspect] = useState("square");
-  const [bg, setBg] = useState("");
+  const [bg, setBg] = useState(autoBackground ? "auto" : "");
   const [pending, start] = useTransition();
 
   function generate() {
@@ -58,7 +58,8 @@ export function ImagePanel({ postId, defaultText, photos, images, editable, form
         </div>
         {template === "photo-veil" && (
           <div className="space-y-1.5"><Label>Foto de fondo (de la biblioteca)</Label>
-            <Select value={bg} onValueChange={setBg}><SelectTrigger className="w-full"><SelectValue placeholder={photos.length ? "Elegí una foto" : "No hay fotos en la biblioteca"} /></SelectTrigger><SelectContent>{photos.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select></div>
+            <Select value={bg} onValueChange={setBg}><SelectTrigger className="w-full"><SelectValue placeholder={photos.length ? "Elegí una foto" : "No hay fotos en la biblioteca"} /></SelectTrigger><SelectContent>{autoBackground && <SelectItem value="auto">Automática (de {autoBackground})</SelectItem>}{photos.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select>
+            <p className="text-xs text-muted-foreground">{autoBackground ? `Con «Automática» se busca una foto según las palabras clave del contenido y se guarda en la biblioteca.` : "Para traer fotos automáticamente configurá PIXABAY_API_KEY o PEXELS_API_KEY en el entorno."}</p></div>
         )}
         <Button onClick={generate} disabled={!editable || pending || text.trim().length < 3}>{pending ? <Loader2 className="animate-spin" /> : <ImageIcon />} Generar imagen</Button>
         {images.length > 0 && (
