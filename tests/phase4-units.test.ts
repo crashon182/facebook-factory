@@ -232,3 +232,13 @@ describe("webhook y estado OAuth", () => {
     expect(readOAuthState("a.b", state, 2000)).toBeNull();
   });
 });
+
+describe("composeMessage con versículo", () => {
+  it("versículo completo + referencia, luego la reflexión y los hashtags", () => {
+    const m = composeMessage({ verseText: "Lámpara es a mis pies tu palabra", verseReference: "Salmos 119:105", body: "Reflexión.", facebookCaption: "Caption", hashtags: ["fe"] });
+    expect(m).toBe("«Lámpara es a mis pies tu palabra»\nSalmos 119:105\n\nReflexión.\n\n#fe");
+  });
+  it("sin versículo conserva el comportamiento anterior", () => {
+    expect(composeMessage({ verseText: null, body: "B", facebookCaption: "C" })).toBe("C");
+  });
+});
